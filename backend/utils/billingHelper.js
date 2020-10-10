@@ -3,17 +3,16 @@ const {spawn} = require('child_process')
 const { google } = require('googleapis')
 const fs = require('fs')
 const csv = require('csv-parse')
+const databaseHelper = require('./databaseHelper')
 
+const getCosts = async (instance, product, zone, start, rowid, startZone, startProvider) => {
+  
+  const python = spawn('python3', [parameters.billingFile, instance, product, zone, start, rowid, startZone, startProvider])
+  console.log(`BillingHelper: Start calculating costs of ${instance} ${product} ${zone} ${start} ${startZone} ${startProvider}`)
 
-const getCosts = async (instance, product, zone, start, rowid, startZone) => {
-  
-  
-  const python = spawn('python3', [parameters.billingFile, instance, product, zone, start, rowid, startZone])
-  console.log(`BillingHelper: Start calculating costs of ${instance} ${product} ${zone} ${start} ${startZone}`)
   
   python.on('close', async () => {
-    console.log(`BillingHelper: Finished calculating costs of ${instance} ${product} ${zone} ${start}`)
-  
+    console.log(`BillingHelper: Finished calculating costs of ${instance} ${product} ${zone} ${start} ${startProvider}`)
   })
 
 
@@ -46,9 +45,7 @@ const loadFile = async () => {
   return results
 }
 
-
-
-const getEnginePrice = async (machineName, cores, memory) => {
+const getEngineData = async (machineName) => {
 
   const cloudbilling = google.cloudbilling('v1')
 
@@ -59,9 +56,10 @@ const getEnginePrice = async (machineName, cores, memory) => {
     auth: authClient,
   }
 
-  const name = parameters.engineMachineTypes.filter(engine => engine === machineName)[0]
   let cpus = []
   let rams = []
+  const name = parameters.engineMachineTypes.filter(engine => engine === machineName)[0]
+    
   let response
   do {
     if (response && response.nextPageToken) {
@@ -71,7 +69,7 @@ const getEnginePrice = async (machineName, cores, memory) => {
     const skusPage = response.skus
     if (skusPage) {
       skusPage.map(item => {
-        const description = item.description.split(' ')
+          const description = item.description.split(' ')
         const filteredValue = description.filter(v => v === name)
         if(filteredValue.length > 0){
           if(item.category.usageType === 'Preemptible' && item.category.resourceGroup === 'RAM'){
@@ -81,10 +79,47 @@ const getEnginePrice = async (machineName, cores, memory) => {
             cpus = cpus.concat(item)
           }
         }
-       
+        
       })
     }
   } while (response.nextPageToken)
+  
+
+  return {cpus, rams}
+  
+}
+
+const calcStartZoneEnginePrice = async (machineName, cores, memory, startZone, rowid) => {
+  const data = await getEngineData(machineName)
+
+  const cpus = data.cpus
+  const rams = data.rams
+
+  regions = await loadFile()
+  let totalPrice = 0
+  const region = regions.filter(region => region[0] === startZone.slice(0, -2))[0]
+  const cpu = cpus.filter(c => c.serviceRegions[0] === region[0])
+  const ram = rams.filter(r => r.serviceRegions[0] === region[0])
+  if(cpu.length !== 0 && ram.length !== 0){
+    const cpuPrice = cpu[0].pricingInfo[0].pricingExpression.tieredRates[0].unitPrice.nanos
+    const ramPrice = ram[0].pricingInfo[0].pricingExpression.tieredRates[0].unitPrice.nanos
+    totalPrice = (((cpuPrice * cores) + (ramPrice * memory)) / 1000000000) * 24
+  }
+
+  
+  await databaseHelper.updateById(parameters.billingTableName, 'costNoMigration = ?, updatedAt = ?', [Number((totalPrice).toFixed(4)), Date.now(), rowid])
+
+}
+
+
+
+const getEnginePrice = async (machineName, cores, memory) => {
+
+  
+  const data = await getEngineData(machineName)
+
+  const cpus = data.cpus
+  const rams = data.rams
 
   regions = await loadFile()
 
@@ -112,7 +147,7 @@ const getEnginePrice = async (machineName, cores, memory) => {
 }
 
 
-module.exports = { getCosts, getEnginePrice }
+module.exports = { getCosts, getEnginePrice, calcStartZoneEnginePrice }
 
 
 

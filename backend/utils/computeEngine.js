@@ -5,7 +5,6 @@ const keyFile = parameters.googleCloudKeyFile
 const compute = new Compute({projectId, keyFile})
 const databaseHelper = require('./databaseHelper')
 const fileHelper = require('./fileHelper')
-const { keys } = require('d3')
 const getZones = async () => {
 
   return await new Promise((resolve) => {

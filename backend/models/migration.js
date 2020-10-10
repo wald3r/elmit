@@ -2,6 +2,11 @@ const parameters = require('../parameters')
 
 const migrationModel = `
   rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+  startProvider TEXT,
+  engineStartMachine TEXT,
+  engineStartCores TEXT,
+  engineStartMemory TEXT,
+  provider TEXT, 
   startZone TEXT NOT NULL,
   oldZone TEXT NOT NULL, 
   newZone TEXT, 

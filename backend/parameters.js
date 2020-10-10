@@ -24,7 +24,7 @@ const modelTableValues = 'rowid, type, product, region, status, createdAt, updat
 const imageTableValues = 'rowid, provider, manually, schedulerName, bidprice, simulation, port, predictionFile, userId, status, modelId, spotInstanceId, requestId, zone, path, ip, key, createdAt, updatedAt'
 const userTableValues = 'rowid, username, password, createdAt, updatedAt'
 const billingTableValues = 'rowid, costNoMigration, predictedCost, actualCost, imageId, userid, createdAt, updatedAt'
-const migrationTableValues = 'rowid, startZone, oldZone, newZone, count, oldSpotInstanceId, imageId, createdAt, updatedAt'
+const migrationTableValues = 'rowid, startProvider, engineStartMachine, engineStartCores, engineStartMemory, provider, startZone, oldZone, newZone, count, oldSpotInstanceId, imageId, createdAt, updatedAt'
 
 const mlTrainFile = __dirname+'/ml_model/train_ml_model.py'
 const mlDeleteFile = __dirname+'/ml_model/delete_ml_model.py'

@@ -107,12 +107,17 @@ const requestEngineInstance = async(image, machineType) => {
   
 }
 
-const setScheduler = async (image, model, user, flag, startZone) => {
+const setScheduler = async (image, model, user, flag, startZone, prediction, engineMachine, engineCores, engineMemory, startProvider) => {
 
   let newImage = null
   if(flag){
     newImage = await databaseHelper.selectById(parameters.imageTableValues, parameters.imageTableName, image.rowid)
-    await databaseHelper.insertRow(parameters.migrationTableName, `(null, ?, ?, ?, ?, ?, ?, ?,  ?)`, [startZone, newImage.zone, null, 1, newImage.spotInstanceId, newImage.rowid, Date.now(), Date.now()])
+    let migrationRows = await databaseHelper.selectRowsByValues(parameters.migrationTableValues, parameters.migrationTableName, "imageId = ?", [newImage.rowid])
+    if(migrationRows.length === 0){
+      await databaseHelper.insertRow(parameters.migrationTableName, `(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?)`, [startProvider, engineMachine, engineCores, engineMemory, prediction.provider, startZone, newImage.zone, null, 1, newImage.spotInstanceId, newImage.rowid, Date.now(), Date.now()])
+    }else{
+      await databaseHelper.insertRow(parameters.migrationTableName, `(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?)`, [migrationRows[0].startProvider, migrationRows[0].engineStartMachine, migrationRows[0].engineStartCores, migrationRows[0].engineStartMemory, prediction.provider, startZone, newImage.zone, null, 1, newImage.spotInstanceId, newImage.rowid, Date.now(), Date.now()])
+    }
   }
 
   const time = Date.now()+ (parameters.migrationHour * 3600 * 1000) + parameters.migrationMinutes * 60 * 1000
@@ -175,10 +180,10 @@ const newInstance = async (model, image, user) => {
    
       await filteredRows.map(async row => {
         await databaseHelper.updateById(parameters.migrationTableName, 'newZone = ?, updatedAt = ?', [prediction.zone, Date.now(), row.rowid])
-        await billingHelper.getCosts(model.type, model.product, image.zone, row.updatedAt, billingRow.rowid, migrationRows[0].startZone)
-
+        
+        image.provider === 'AWS' ? await billingHelper.getCosts(model.type, model.product, image.zone, row.updatedAt, billingRow.rowid, migrationRows[0].startZone, row.startProvider) : null
       })
-      await setScheduler(newImage, model, user, true, migrationRows[0].startZone)
+      await setScheduler(newImage, model, user, true, migrationRows[0].startZone, prediction, null, null, null, prediction.provider)
 
       return true
 
@@ -189,7 +194,7 @@ const newInstance = async (model, image, user) => {
         await startDocker(newImage.ip, newImage.key, prediction.provider)
         await databaseHelper.updateById(parameters.imageTableName, 'status = ?, updatedAt = ?', ['running', Date.now(), image.rowid])
       }
-      await setScheduler(image, model, user, true, prediction.zone)
+      await setScheduler(image, model, user, true, prediction.zone, prediction, machineType.metadata.name.substring(0,2).toUpperCase(), machineType.metadata.guestCpus, machineType.metadata.memoryMb / 1024, prediction.provider)
 
       return true
     }
@@ -198,14 +203,15 @@ const newInstance = async (model, image, user) => {
     const imageRow = await databaseHelper.selectById(parameters.imageTableValues, parameters.imageTableName, image.rowid)
     const migrationRows = await databaseHelper.selectRowsByValues(parameters.migrationTableValues, parameters.migrationTableName, 'imageId = ?', [imageRow.rowid])
     const filteredRows = migrationRows.filter(row => row.newZone === null)
-    await filteredRows.map(async row => {
-      await databaseHelper.updateById(parameters.migrationTableName, 'count = ?, updatedAt = ?', [row.count+1, Date.now(), row.rowid])
-      const billingRows = await databaseHelper.selectIsNull(parameters.billingTableValues, parameters.billingTableName, 'actualCost')
-      const billingRow = billingRows.filter(b => b.imageId === imageRow.rowid)[0]
-      console.log(migrationRows[0].startZone, imageRow.zone)
-      await billingHelper.getCosts(model.type, model.product, imageRow.zone, row.updatedAt, billingRow.rowid, migrationRows[0].startZone)
-    })
-    await setScheduler(image, model, user, false, migrationRows[0].startZone)
+    if(prediction.provider === 'AWS'){
+      await filteredRows.map(async row => {
+        await databaseHelper.updateById(parameters.migrationTableName, 'count = ?, updatedAt = ?', [row.count+1, Date.now(), row.rowid])
+        const billingRows = await databaseHelper.selectIsNull(parameters.billingTableValues, parameters.billingTableName, 'actualCost')
+        const billingRow = billingRows.filter(b => b.imageId === imageRow.rowid)[0]
+        await billingHelper.getCosts(model.type, model.product, imageRow.zone, row.updatedAt, billingRow.rowid, migrationRows[0].startZone, row.startProvider)
+      })
+    }
+    await setScheduler(image, model, user, false, migrationRows[0].startZone, prediction, null, null, null)
   }
 
 }
@@ -236,9 +242,7 @@ const deleteKey = async(image) => {
 }
 
 const copyKey = async (oldImage, newImage, provider) => {
-  console.log(oldImage)
-  console.log(newImage)
-  console.log(provider)
+
   if(oldImage.provider === 'Google'){
     await sshConnectionEngine.copyKey(oldImage.ip, newImage.key)
   }else{
@@ -253,9 +257,6 @@ const copyKey = async (oldImage, newImage, provider) => {
 
 const migrateFiles = async (oldImage, newImage, provider) => {
 
-  console.log(oldImage)
-  console.log(newImage)
-  console.log(provider)
   await new Promise(async (resolve) => {
     const strings = newImage.key.split('/')
     const key = strings[strings.length-1]

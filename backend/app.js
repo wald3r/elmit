@@ -20,6 +20,7 @@ const migrationRouter = require('./controllers/migrationController')
 const spotInstances = require('./utils/spotInstances')
 const computeEngine = require('./utils/computeEngine')
 const billingHelper = require('./utils/billingHelper')
+const limiter = require('./middleware/limiter')
 
 const credentialsChecker = async () => {
   
@@ -57,6 +58,8 @@ scheduler.checkInstances
 //scheduler.scheduleCollectSpotPrices
 scheduler.trainModels
 app.use(express.static('build'))
+app.use('/api/login', limiter.loginLimiter)
+app.use('/api/registration', limiter.accountLimiter)
 app.use(cors())
 app.use(bodyparser.json())
 app.use(fileUpload())

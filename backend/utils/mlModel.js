@@ -3,8 +3,8 @@ const parameters = require('../parameters')
 const databaseHelper = require('../utils/databaseHelper')
 const fs = require('fs')
 const csv = require('csv-parse')
-const billingHelper = require('./billingHelper')
 const computeEngine = require('./computeEngine')
+const billingHelper = require('./billingHelper')
 
 const replace_name = (name) => {
 
@@ -54,7 +54,6 @@ const deleteModel = (instance, product, region) => {
     if (fs.existsSync(fileToDelete)) {
       fs.unlinkSync(fileToDelete)
     }
-    
   })
 }
 
@@ -80,26 +79,42 @@ const predictModel = async (instance, product, image, user, region, engineCost) 
       const path = `${parameters.workDir}/predictions/${instance}_${replace_name(product)}_${image.rowid}.csv`
       let results = []
 
-      fs.createReadStream(path)
+      await fs.createReadStream(path)
         .pipe(csv())
         .on('data', (data) => results.push(data))
         .on('end', async () => {
           results = results.sort(sortFunction)
           let zone = results[0][1]
-          const cost = results[0][0]
+          const cost = 1000000//results[0][0]
 
+          let returnValue = null
+          let billingId = null
           if(Number(cost) <= engineCost.cost || engineCost.cost === 0 || engineCost.cost === null){
             let key = `${image.path}/${parameters.keyName}_${image.rowid}.pem`
-            await databaseHelper.insertRow(parameters.billingTableName, '(null, ?, ?, ?, ?, ?, ?, ?)', [null, results[0][0], null, image.rowid, user.rowid, Date.now(), Date.now()])
+            billingId = await databaseHelper.insertRow(parameters.billingTableName, '(null, ?, ?, ?, ?, ?, ?, ?)', [null, results[0][0], null, image.rowid, user.rowid, Date.now(), Date.now()])
             await databaseHelper.updateById(parameters.imageTableName, 'predictionFile = ?, zone = ?, updatedAt = ?, key = ?', [path, zone, Date.now(), key, image.rowid])
-            resolve({zone, provider: 'AWS'})
+            returnValue = {zone, provider: 'AWS'}
           }else{
             const region = String(engineCost.region[0])
             zone = await computeEngine.getZone(region)
-            await databaseHelper.insertRow(parameters.billingTableName, '(null, ?, ?, ?, ?, ?, ?, ?)', [null, engineCost.cost, null, image.rowid, user.rowid, Date.now(), Date.now()])
+            billingId = await databaseHelper.insertRow(parameters.billingTableName, '(null, ?, ?, ?, ?, ?, ?, ?)', [null, engineCost.cost, engineCost.cost, image.rowid, user.rowid, Date.now(), Date.now()])
             await databaseHelper.updateById(parameters.imageTableName, 'key = ?, predictionFile = ?, zone = ?, updatedAt = ?', [parameters.sshEngineSSHFile, path, zone, Date.now(), image.rowid])
-            resolve({ zone, provider: 'Google'})
+            returnValue = { zone, provider: 'Google'}
           }
+
+          let startProvider = null
+          const migrationRows = await databaseHelper.selectByValue(parameters.migrationTableValues, parameters.migrationTableName, 'imageId', [image.rowid])
+      
+          if(migrationRows.length !== 0){
+            startProvider = migrationRows[0].startProvider
+          }
+        
+          if(startProvider === 'Google'){
+            await billingHelper.calcStartZoneEnginePrice(migrationRows[0].engineStartMachine, migrationRows[0].engineStartCores, migrationRows[0].engineStartMemory, migrationRows[0].startZone, billingId)
+          }else if (returnValue.provider === 'Google' && migrationRows.length === 0){
+            await databaseHelper.updateById(parameters.billingTableName, 'costNoMigration = ?', [engineCost.cost, billingId])
+          }
+          resolve(returnValue)
         })
       })
   })

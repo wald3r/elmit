@@ -1,6 +1,7 @@
 google.json
-
+elmit.pem
 /python_analysis/variables/*
+/python_analysis/aws_spot_pricing.csv
 /backend/ml_model/models/*
 /backend/node_modules/*
 /backend/spot_pricing/aws_spot_pricing.csv

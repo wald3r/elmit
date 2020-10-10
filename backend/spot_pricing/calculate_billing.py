@@ -32,11 +32,22 @@ def update_task(conn, task):
     conn.commit()
 
 
+def update_task1(conn, task):
+
+    sql = ''' UPDATE billing
+              SET actualCost = ? ,
+                  updatedAt = ? 
+              WHERE rowid = ?'''
+    cur = conn.cursor()
+    cur.execute(sql, task)
+
+    conn.commit()
+
 
 def main():
 
-    if(len(sys.argv) != 7):
-        print("Four Arguments needed! How to: python3 calculate_billing.py <instanceType> <productDescription> <currentzone> <start> <rowid> <startzone>")
+    if(len(sys.argv) != 8):
+        print("Four Arguments needed! How to: python3 calculate_billing.py <instanceType> <productDescription> <currentzone> <start> <rowid> <startzone> <startProvider>")
         exit(0)
 
 
@@ -46,31 +57,36 @@ def main():
     zone = str(sys.argv[3])
     rowid = str(sys.argv[5])
     startzone = str(sys.argv[6])
-
+    provider = str(sys.argv[7])
+    
+    print(provider)
+    
     path = os.path.normpath(os.getcwd() + os.sep + os.pardir)
     filepath = path + '/backend/spot_pricing/pricing_history/' + instance
 
     df = pd.read_csv(filepath, delimiter = ',')
 
+    sum_start = None
     #start zone
-    df_start = df[df['AvailabilityZone'] == startzone]
-    df_start = df_start[df_start['ProductDescription'] == product]
+    if(provider == 'AWS'):    
+	    df_start = df[df['AvailabilityZone'] == startzone]
+	    df_start = df_start[df_start['ProductDescription'] == product]
 
-    df_last_row_start = df_start.tail(1)
-    df_start = df_start.append(
-        {'SpotPrice': df_last_row_start.SpotPrice.values[0], 'AvailabilityZone': df_last_row_start.AvailabilityZone.values[0], 'InstanceType': df_last_row_start.InstanceType.values[0],
-         'ProductDescription': df_last_row_start.ProductDescription.values[0], 'Timestamp': datetime.datetime.now(), 'Training': 0}, ignore_index=True)
+	    df_last_row_start = df_start.tail(1)
+	    df_start = df_start.append(
+		{'SpotPrice': df_last_row_start.SpotPrice.values[0], 'AvailabilityZone': df_last_row_start.AvailabilityZone.values[0], 'InstanceType': df_last_row_start.InstanceType.values[0],
+		 'ProductDescription': df_last_row_start.ProductDescription.values[0], 'Timestamp': datetime.datetime.now(), 'Training': 0}, ignore_index=True)
 
-    df_start['Timestamp'] = pd.to_datetime(df_start['Timestamp'])
+	    df_start['Timestamp'] = pd.to_datetime(df_start['Timestamp'])
 
-    df_start = df_start.drop_duplicates(subset=['Timestamp'])
-    df_start = df_start.set_index('Timestamp')
-    df_start = df_start.resample('H').pad()
-    df_start = df_start.reset_index()
+	    df_start = df_start.drop_duplicates(subset=['Timestamp'])
+	    df_start = df_start.set_index('Timestamp')
+	    df_start = df_start.resample('H').pad()
+	    df_start = df_start.reset_index()
 
-    df_start = df_start.loc[(df_start.Timestamp >= utc.localize(start))]
-    df_start = df_start.loc[(df_start.Timestamp <= utc.localize(datetime.datetime.today()))]
-    sum_start = df_start.groupby('AvailabilityZone')['SpotPrice'].agg(['sum'])
+	    df_start = df_start.loc[(df_start.Timestamp >= utc.localize(start))]
+	    df_start = df_start.loc[(df_start.Timestamp <= utc.localize(datetime.datetime.today()))]
+	    sum_start = df_start.groupby('AvailabilityZone')['SpotPrice'].agg(['sum'])
 
     #current zone
     df = df[df['AvailabilityZone'] == zone]
@@ -97,12 +113,15 @@ def main():
     sum = df.groupby('AvailabilityZone')['SpotPrice'].agg(['sum'])
     database = path + '/backend/devsqlite.db'
     conn = create_connection(database)
-    print(round(sum_start.values[0][0], 4), startzone, len(df_start), start, datetime.datetime.today())
-    print(round(sum.values[0][0], 4), zone, len(df), start, datetime.datetime.today())
+    #print(round(sum_start.values[0][0], 4), startzone, len(df_start), start, datetime.datetime.today())
+    #print(round(sum.values[0][0], 4), zone, len(df), start, datetime.datetime.today())
 
+    
     with conn:
-        update_task(conn, (round(sum.values[0][0], 4), round(sum_start.values[0][0], 4),int(round(time.time() * 1000)), rowid))
-
+        if(provider == 'AWS'):
+            update_task(conn, (round(sum.values[0][0], 4), round(sum_start.values[0][0], 4),int(round(time.time() * 1000)), rowid))
+        else:
+            update_task1(conn, (round(sum.values[0][0], 4), int(round(time.time() * 1000)), rowid))
 
 if __name__ == "__main__":
     main()
