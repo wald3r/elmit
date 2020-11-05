@@ -114,9 +114,17 @@ const setScheduler = async (image, model, user, flag, startZone, prediction, eng
     newImage = await databaseHelper.selectById(parameters.imageTableValues, parameters.imageTableName, image.rowid)
     let migrationRows = await databaseHelper.selectRowsByValues(parameters.migrationTableValues, parameters.migrationTableName, "imageId = ?", [newImage.rowid])
     if(migrationRows.length === 0){
-      await databaseHelper.insertRow(parameters.migrationTableName, `(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?)`, [startProvider, engineMachine, engineCores, engineMemory, prediction.provider, startZone, newImage.zone, null, 1, newImage.spotInstanceId, newImage.rowid, Date.now(), Date.now()])
+      if(prediction.provider === 'Google'){
+        await databaseHelper.insertRow(parameters.migrationTableName, `(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [engineMachine, engineCores, engineMemory, startProvider, engineMachine, engineCores, engineMemory, prediction.provider, startZone, newImage.zone, null, 1, newImage.spotInstanceId, newImage.rowid, Date.now(), Date.now()])
+      }else{
+        await databaseHelper.insertRow(parameters.migrationTableName, `(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [null, null, null, startProvider, null, null, null, prediction.provider, startZone, newImage.zone, null, 1, newImage.spotInstanceId, newImage.rowid, Date.now(), Date.now()])
+      }
     }else{
-      await databaseHelper.insertRow(parameters.migrationTableName, `(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?)`, [migrationRows[0].startProvider, migrationRows[0].engineStartMachine, migrationRows[0].engineStartCores, migrationRows[0].engineStartMemory, prediction.provider, startZone, newImage.zone, null, 1, newImage.spotInstanceId, newImage.rowid, Date.now(), Date.now()])
+      if(prediction.provider === 'Google'){
+        await databaseHelper.insertRow(parameters.migrationTableName, `(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [engineMachine, engineCores, engineMemory, migrationRows[0].startProvider, migrationRows[0].engineStartMachine, migrationRows[0].engineStartCores, migrationRows[0].engineStartMemory, prediction.provider, startZone, newImage.zone, null, 1, newImage.spotInstanceId, newImage.rowid, Date.now(), Date.now()])
+      }else{
+        await databaseHelper.insertRow(parameters.migrationTableName, `(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [null, null, null, migrationRows[0].startProvider, migrationRows[0].engineStartMachine, migrationRows[0].engineStartCores, migrationRows[0].engineStartMemory, prediction.provider, startZone, newImage.zone, null, 1, newImage.spotInstanceId, newImage.rowid, Date.now(), Date.now()])
+      }
     }
   }
 
@@ -183,7 +191,7 @@ const newInstance = async (model, image, user) => {
         
         image.provider === 'AWS' ? await billingHelper.getCosts(model.type, model.product, image.zone, row.updatedAt, billingRow.rowid, migrationRows[0].startZone, row.startProvider) : null
       })
-      await setScheduler(newImage, model, user, true, migrationRows[0].startZone, prediction, null, null, null, prediction.provider)
+      await setScheduler(newImage, model, user, true, migrationRows[0].startZone, prediction, machineType.metadata.name.substring(0,2).toUpperCase(), machineType.metadata.guestCpus, machineType.metadata.memoryMb / 1024, prediction.provider)
 
       return true
 

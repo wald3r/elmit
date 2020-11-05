@@ -29,7 +29,7 @@ for y in instances:
     end = utc.localize(datetime.datetime.now())
 
     if(filtered.empty):
-        start = utc.localize(datetime.datetime(2020, 5, 1))
+        start = utc.localize(datetime.datetime(2020, 8, 1))
     else:
         start = utc.localize(datetime.datetime.strptime(filtered['end'][0], '%Y-%m-%d %H:%M:%S.%f+00:00'))
 
