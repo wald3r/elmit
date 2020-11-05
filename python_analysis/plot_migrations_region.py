@@ -54,14 +54,18 @@ def getPrice(df_new, df_startZone, indx):
     filter3 = df_startZone['Day'] == day
     return df_startZone.where(filter1 & filter2 & filter3).dropna().reset_index(drop=True)
 
-def get_dataframes(df):
+def get_dataframes(df, region):
 
     df = prepare_timestamps(df)
+    
+    df['Region'] = df['AvailabilityZone'].str[:-1]
+    df = df[df['Region'] == region]
 
-    df_old = df.groupby(['AvailabilityZone', 'Year', 'Month', 'Day'])['SpotPrice'].agg('sum').reset_index()
-    df_old = df_old.groupby('AvailabilityZone', group_keys=False).apply(first_last).reset_index()
+    df_old = df.groupby(['Region', 'AvailabilityZone', 'Year', 'Month', 'Day'])['SpotPrice'].agg('sum').reset_index()
 
-    print(df_old.to_string())
+    df_old = df_old.groupby(['Region', 'AvailabilityZone'], group_keys=False).apply(first_last).reset_index(drop=True)
+    df_old = df_old.drop(['Region'], axis=1)
+
 
     df_new = df_old.loc[df_old.groupby(['Year', 'Month', 'Day'])['SpotPrice'].idxmin()].reset_index(drop=True)
 
@@ -82,7 +86,7 @@ def get_dataframes(df):
 
 
 
-def plot(migrations, start, list, instance, product):
+def plot(migrations, start, list, instance, product, region):
 
     plt.plot(migrations['SpotPrice'], color='green')
     plt.plot(start['SpotPrice'], color='red')
@@ -93,12 +97,12 @@ def plot(migrations, start, list, instance, product):
 
     plt.xlabel('Days')
     plt.ylabel('SpotPrice')
-    plt.title(instance+' - '+product)
+    plt.title(instance+' - '+product+' - '+region)
     plt.show()
 
 def main():
 
-        if(len(sys.argv) != 2):
+        if(len(sys.argv) != 3):
             print('Wrong number of arguments!')
             exit(1)
 
@@ -124,6 +128,7 @@ def main():
 
         print('Start plotting...')
         instanceType = str(sys.argv[1])
+        region = str(sys.argv[2])
         productDescription = product_list[number-1]
 
         df_start = pd.DataFrame()
@@ -135,22 +140,22 @@ def main():
             df = df[df['ProductDescription'] == productDescription]
             df = df.drop(['InstanceType'], axis=1)
             df = df.drop(['ProductDescription'], axis=1)
-
+	
             df_start = pd.concat([df_start, df])
 
         if df_start.empty:
             pass
 
         else:
-            df_migration, df_start, list = get_dataframes(df_start)
+            df_migration, df_start, list = get_dataframes(df_start, region)
 
             print(df_start.to_string())
             print(df_migration.to_string())
             print(list)
             
-            print(df_start["SpotPrice"].sum(), df_migration["SpotPrice"].sum(), df_start["SpotPrice"].sum() - df_migration["SpotPrice"].sum(), len(df_start), len(df_migration))
+            print(df_start["SpotPrice"].sum(), df_migration["SpotPrice"].sum(), df_start["SpotPrice"].sum() - df_migration["SpotPrice"].sum(), len(df_start), len(df_migration), df_migration['AvailabilityZone'].nunique())
 
-            plot(df_migration, df_start, list, instanceType, productDescription)
+            plot(df_migration, df_start, list, instanceType, productDescription, region)
 
 
 if __name__ == "__main__":

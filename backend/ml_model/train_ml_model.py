@@ -49,12 +49,13 @@ def main():
     instance_type = str(sys.argv[1])
     product_description = str(sys.argv[2])
 
-    gen = GenerateTrainingData('training_data_v2.csv')
+    training_file = '/training_data/'+instance_type+'_'+productDescription+'_v1.csv'
+    gen = GenerateTrainingData(training_file)
 
 
     if(gen.generate(instance_type, product_description)):
 
-        df = pd.read_csv('training_data_v2.csv', sep=',')
+        df = pd.read_csv(training_file, sep=',')
 
         zones = None
         if(region == 'worldwide'):

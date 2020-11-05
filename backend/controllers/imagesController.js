@@ -26,7 +26,7 @@ imagesRouter.get('/', async(request, response, next) => {
         if(responseArray[a].simulation === 1){
           responseArray[a].state = 'simulation'
         }
-        if(responseArray[a].provider === 'AWS'){
+        else if(responseArray[a].provider === 'AWS'){
           if(responseArray[a].spotInstanceId !== null){
             responseArray[a].state = await spotInstances.getInstanceState(responseArray[a].zone, [responseArray[a].spotInstanceId]) 
           }else{
