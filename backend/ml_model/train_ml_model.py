@@ -59,8 +59,8 @@ def main():
 
         zones = None
         if(region == 'worldwide'):
-            #zones = df['AvailabilityZone'].drop_duplicates().values
-            zones = ['ap-northeast-1a', 'eu-west-3a']
+            zones = df['AvailabilityZone'].drop_duplicates().values
+            #zones = ['ap-northeast-1a', 'eu-west-3a']
         else:
             all_zones = df['AvailabilityZone'].drop_duplicates().values
             zones = [s for s in all_zones if region in s]
