@@ -2,6 +2,7 @@ const registrationRouter = require('express').Router()
 const bcrypt = require('bcrypt')
 const databaseHelper = require('../utils/databaseHelper')
 const parameters = require('../parameters')
+const logger = require('../utils/logger')
 
 registrationRouter.post('/', async(request, response) => {
 
@@ -17,7 +18,7 @@ registrationRouter.post('/', async(request, response) => {
   if(userId === -1 || userRow === null){
     return response.status(401).send('registration failed')
   }
-  console.log(`RegistrationHelper: New user registered with username ${body.username}`)
+  logger.defaultLogger(`RegistrationHelper: New user registered with username ${body.username}`)
   return response.status(200).json(userRow)
 })
 

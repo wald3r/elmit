@@ -1,5 +1,6 @@
 const NodeSSH = require("node-ssh");
 const parameters = require('../parameters')
+const logger = require('./logger')
 
 ssh = new NodeSSH()
 
@@ -29,9 +30,9 @@ const setUpServer = async (ip, pathToDocker) => {
           }
         }
       }).then((status) => {
-        console.log(`SSHConnectionHelper: The directory transfer to ${ip} was ${status ? 'successful' : 'unsuccessful'}`)
-        console.log(`SSHConnectionHelper: failed transfers to ${ip}: ${failed.join(', ')}`)
-        console.log(`SSHConnectionHelper: successful transfers to ${ip}: ${successful.join(', ')}`)
+        logger.defaultLogger(`SSHConnectionHelper: The directory transfer to ${ip} was ${status ? 'successful' : 'unsuccessful'}`)
+        logger.defaultLogger(`SSHConnectionHelper: failed transfers to ${ip}: ${failed.join(', ')}`)
+        logger.defaultLogger(`SSHConnectionHelper: successful transfers to ${ip}: ${successful.join(', ')}`)
         resolve()
       })
       
@@ -54,11 +55,11 @@ const copyKey = async (ip, key) => {
     }).then(() => {
       ssh.putFile(key, `/home/${parameters.engineUsername}/image/${keyName}`)
       .then(() => {
-        console.log(`CopyKeyHelper: The key ${key} was copied successfully to ${ip}`)
+        logger.defaultLogger(`CopyKeyHelper: The key ${key} was copied successfully to ${ip}`)
         resolve(1)
       }, (error) => {
-        console.log(`CopyKeyHelper: The copying of the key ${key} to ${ip} failed`)
-        console.log(error)
+        logger.defaultLogger(`CopyKeyHelper: The copying of the key ${key} to ${ip} failed`)
+        logger.defaultLogger(error)
         resolve(-1)
       })
     })
@@ -80,13 +81,13 @@ const executeMigration = async (fromIp, toIp, key, oldProvider, newProvider) => 
     })
     .then(() => {
       ssh.execCommand(`cd /home/${parameters.engineUsername}/image && sudo chmod +xr *.sh && chmod 400 ${key} && ./migration.sh ${toIp} ${key} ${oldProvider} ${newProvider}`).then((result) => {
-        console.log(`STDOUT of ${fromIp}: ${result.stdout}`)
-        console.log(`STDERR of ${fromIp}: ${result.stderr}`)
+        logger.defaultLogger(`STDOUT of ${fromIp}: ${result.stdout}`)
+        logger.defaultLogger(`STDERR of ${fromIp}: ${result.stderr}`)
         resolve(1)
       })
     })
     .catch((exception) => {
-      console.log(exception)
+      logger.defaultLogger(exception)
       resolve(-1)
     })
   })
@@ -107,11 +108,11 @@ const installSoftware = async (ip) => {
     
     }).then(() => {
       ssh.execCommand(`chmod +xr /home/${parameters.engineUsername}/image/engine_install.sh && cd /home/${parameters.engineUsername}/image/ && ./engine_install.sh && exit`).then((result) => {
-        console.log(`STDOUT of ${ip}: ${result.stdout}`)
-        console.log(`STDERR of ${ip}: ${result.stderr}`)
+        logger.defaultLogger(`STDOUT of ${ip}: ${result.stdout}`)
+        logger.defaultLogger(`STDERR of ${ip}: ${result.stderr}`)
         resolve(1)
       }).catch((error) => {
-        console.log(error)
+        logger.defaultLogger(error)
         resolve(-1)
       })
     })
@@ -132,12 +133,12 @@ const startDocker = async (ip) => {
     })
     .then(() => {
       ssh.execCommand(`sudo service docker restart && cd /home/${parameters.engineUsername}/image/ && sudo docker-compose up -d && exit`).then((result) => {
-        console.log(`STDOUT of ${ip}: ${result.stdout}`)
-        console.log(`STDERR of ${ip}: ${result.stderr}`)
+        logger.defaultLogger(`STDOUT of ${ip}: ${result.stdout}`)
+        logger.defaultLogger(`STDERR of ${ip}: ${result.stderr}`)
         resolve(1)
       })
     }).catch((exception) => {
-      console.log(exception)
+      logger.defaultLogger(exception)
       resolve(-1)
     })
   })
@@ -157,8 +158,8 @@ const endDocker = async (ip) => {
     })
     .then(() => {
       ssh.execCommand(`cd /home/${parameters.engineUsername}/image && sudo docker-compose down && exit`).then((result) => {
-        console.log(`STDOUT of ${ip}: ${result.stdout}`)
-        console.log(`STDERR of ${ip}: ${result.stderr}`)
+        logger.defaultLogger(`STDOUT of ${ip}: ${result.stdout}`)
+        logger.defaultLogger(`STDERR of ${ip}: ${result.stderr}`)
         resolve(1)
       })
     })

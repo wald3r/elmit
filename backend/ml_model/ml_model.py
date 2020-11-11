@@ -18,7 +18,7 @@ class MLModel(object):
         self.architecture_name = architecture_name
         self.input_shape_1 = 1
         self.input_shape_2 = 15
-        self.epochs = 1
+        self.epochs = 250
         self.batch_size = 32
         self.output_shape = 1
         self.ticks = 15

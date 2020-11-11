@@ -5,11 +5,14 @@ const keyFile = parameters.googleCloudKeyFile
 const compute = new Compute({projectId, keyFile})
 const databaseHelper = require('./databaseHelper')
 const fileHelper = require('./fileHelper')
+const logger = require('./logger')
+
+
 const getZones = async () => {
 
   return await new Promise((resolve) => {
     compute.getZones((err, zones) => {
-      if(err) console.log(err)
+      if(err) logger.spotLogger(err)
       resolve(zones)
     }) 
   })
@@ -37,8 +40,8 @@ const createSecurityConfig = async (port) => {
 
   if(list.length === 0){
     network.createFirewall('elmit-firewall', config, (err, firewall, operation, apiResponse) => {
-      if(err) console.log(err)
-        console.log('test')
+      if(err) logger.spotLogger(err)
+        logger.spotLogger('test')
     })
   }
  
@@ -50,7 +53,7 @@ const findMachineType = async (cpu, memory) => {
   let list = []
   await new Promise((resolve) => {
     compute.getMachineTypes((err, machineTypes) => {
-      if(err) console.log(err)
+      if(err) logger.spotLogger(err)
       else {
         machineTypes.filter(type => {
           let gcpu = type.metadata.guestCpus
@@ -87,7 +90,7 @@ const setSSHKey = async (vm) => {
 
   await new Promise((resolve) => {
     vm.setMetadata({customKey: null}, (error) => {
-      if(error) console.log(`SetEngineSSHKeyHelper:  ${error}`)
+      if(error) logger.spotLogger(`SetEngineSSHKeyHelper:  ${error}`)
       else{
         resolve()
       }
@@ -96,9 +99,9 @@ const setSSHKey = async (vm) => {
 
   await new Promise((resolve) => {
     vm.setMetadata(metadata, (error) => {
-      if(error) console.log(`SetEngineSSHKeyHelper:  ${error}`)
+      if(error) logger.spotLogger(`SetEngineSSHKeyHelper:  ${error}`)
       else{
-        console.log(`SetEngineSSHKeyHelper: Key successfully set`)
+        logger.spotLogger(`SetEngineSSHKeyHelper: Key successfully set`)
         resolve()
       }
     })
@@ -113,7 +116,7 @@ const getZone = async (chosenRegion) => {
   let regions = []
   await new Promise((resolve) => {
     compute.getZones((err, zones) => {
-      if(err) console.log(`EngineHelper: Problems with collecting Zones`)
+      if(err) logger.spotLogger(`EngineHelper: Problems with collecting Zones`)
       else{
         regions = zones.filter(z => z.metadata.name.includes(chosenRegion))
         resolve(regions)
@@ -174,7 +177,7 @@ const getStatus = async (image) => {
   let status = null
   await new Promise((resolve) => {
     vm.get((err, vm) => {
-      if(err) console.log(`StatusEngineHelper: ${err}`)
+      if(err) logger.spotLogger(`StatusEngineHelper: ${err}`)
       else{
        status = vm.metadata.status
        resolve()
@@ -203,7 +206,7 @@ const deleteVM = async (name, fromZone) => {
     const [operation] = await vm.delete()
     await operation.promise()
 
-    console.log(`ComputeEngineHelpler: Instance with the name ${name} has been terminated`)
+    logger.spotLogger(`ComputeEngineHelpler: Instance with the name ${name} has been terminated`)
   }
 
 

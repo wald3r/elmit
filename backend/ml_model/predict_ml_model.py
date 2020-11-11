@@ -8,6 +8,7 @@ from generate_training_data import GenerateTrainingData
 
 def plot_all(predictions, test_data, epochs, instance, product, zone):
 
+    #plt.ylim(1.2,1.3)
     plt.plot(test_data, color='blue', label='Actual EC2 Price')
     plt.plot(predictions, color='red', label='Predicted EC2 Price')
     plt.title(instance+' '+product+' '+zone+' - ' + str(epochs) + ' Epochs')
@@ -46,7 +47,9 @@ def main():
     instance_type = str(sys.argv[1])
     product_description = str(sys.argv[2])
     image_id = str(sys.argv[3])
-    training_file = '/training_data/'+instance_type+'_'+productDescription+'_v2.csv'
+    
+    path = os.path.normpath(os.getcwd() + os.sep + os.pardir)
+    training_file = path + '/backend/training_data/'+instance_type+'_'+replace_name(product_description)+'_v2.csv'
     gen = GenerateTrainingData(training_file)
     if(gen.generate(instance_type, product_description) == 0):
         exit(0)
@@ -72,7 +75,7 @@ def main():
 
     print(zones)
     for x in zones:
-    #for x in ['ap-northeast-1a', 'ap-northeast-1c']:
+    #for x in ['ap-southeast-1b']:
 
         try:
             architecture_name = instance_type + '_' + rep_product_description + '_' + str(x) + '_architecture.json'
@@ -89,23 +92,19 @@ def main():
                 test_predictions, test_data = mlobj.predict_testdata(df, scaler, x) #predict test data
                 prediction = sum(test_predictions)
                 sum_test = sum(test_data[:, 0])
-                print(prediction, sum_test)
-
+                print(test_data[:,0])
+                print(test_predictions)
+                mse_outcome, mae_outcome, mape_outcome = mlobj.getErrors(test_predictions, test_data[:,0])
+                print(round(mape_outcome, 4), round(sum_test, 4), round(prediction, 4), round(prediction - sum_test, 4))
+                plot_all(test_predictions, test_data[:, 0], 250, instance_type, product_description, x)
             elif(version == 2):
                 future_predictions = mlobj.predict_future(df, scaler, x)   #predict future
                 prediction = sum(future_predictions)
-                print(prediction)
+                with open(file_name, 'a+') as f:
+                    f.write("%s,%s\n" % (round(prediction, 4), x))
 
-            #mse_outcome, mae_outcome, mape_outcome = mlobj.getErrors(test_predictions[:,column], test_data[:,column])
 
-            with open(file_name, 'a+') as f:
-                f.write("%s,%s\n" % (round(prediction, 4), x))
-
-            #print(round(mape_outcome, 4), round(sum_test, 4), round(sum_prediction - sum_test, 4))
-            #with open('predictions.csv', 'a') as f:
-            #    f.write("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n" % (instance_type, product_description, x, epochs, ticks, batch_size, round(mape_outcome, 4), round(sum_test, 4), round(sum_prediction, 4), round(sum_test-sum_prediction, 4)))
-
-           # plot_all(predictions[:, column], test_data[:, column], epochs, instance_type, product_description, x)
+      
 
         except:
             print('Skip', str(x))

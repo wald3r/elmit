@@ -4,15 +4,16 @@ const { google } = require('googleapis')
 const fs = require('fs')
 const csv = require('csv-parse')
 const databaseHelper = require('./databaseHelper')
+const logger = require('./logger')
 
 const getCosts = async (instance, product, zone, start, rowid, startZone, startProvider) => {
   
   const python = spawn('python3', [parameters.billingFile, instance, product, zone, start, rowid, startZone, startProvider])
-  console.log(`BillingHelper: Start calculating costs of ${instance} ${product} ${zone} ${start} ${startZone} ${startProvider}`)
+  logger.defaultLogger(`BillingHelper: Start calculating costs of ${instance} ${product} ${zone} ${start} ${startZone} ${startProvider}`)
 
   
   python.on('close', async () => {
-    console.log(`BillingHelper: Finished calculating costs of ${instance} ${product} ${zone} ${start} ${startProvider}`)
+    logger.defaultLogger(`BillingHelper: Finished calculating costs of ${instance} ${product} ${zone} ${start} ${startProvider}`)
   })
 
 

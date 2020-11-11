@@ -208,7 +208,6 @@ imagesRouter.get('/start/instance/:rowid', async(request, response, next) => {
 
   
   }catch(exception){
-    console.log(exception)
     response.status(500).send('Can not start instance')
 
   }

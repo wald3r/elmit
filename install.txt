@@ -1,5 +1,9 @@
 Install nodejs
 Install npm
+Install keras
+Install tensorflow
+Install boto3
+Install anaconda3
 
 npm install
 

@@ -1,5 +1,6 @@
 const NodeSSH = require("node-ssh");
 const parameters = require('../parameters')
+const logger = require('./logger')
 
 ssh = new NodeSSH()
 
@@ -27,9 +28,9 @@ const setUpServer = async (ip, pathToKey, pathToDocker) => {
           }
         }
       }).then((status) => {
-        console.log(`SSHConnectionHelper: The directory transfer to ${ip} was ${status ? 'successful' : 'unsuccessful'}`)
-        console.log(`SSHConnectionHelper: failed transfers to ${ip}: ${failed.join(', ')}`)
-        console.log(`SSHConnectionHelper: successful transfers to ${ip}: ${successful.join(', ')}`)
+        logger.defaultLogger(`SSHConnectionHelper: The directory transfer to ${ip} was ${status ? 'successful' : 'unsuccessful'}`)
+        logger.defaultLogger(`SSHConnectionHelper: failed transfers to ${ip}: ${failed.join(', ')}`)
+        logger.defaultLogger(`SSHConnectionHelper: successful transfers to ${ip}: ${successful.join(', ')}`)
         resolve()
       })
       
@@ -48,12 +49,12 @@ const startDocker = async (ip, pathToKey) => {
     })
     .then(() => {
       ssh.execCommand(`sudo service docker restart && cd /home/${parameters.ec2Username}/image/ && sudo docker-compose up -d && exit`).then((result) => {
-        console.log(`STDOUT of ${ip}: ${result.stdout}`)
-        console.log(`STDERR of ${ip}: ${result.stderr}`)
+        logger.defaultLogger(`STDOUT of ${ip}: ${result.stdout}`)
+        logger.defaultLogger(`STDERR of ${ip}: ${result.stderr}`)
         resolve(1)
       })
     }).catch((exception) => {
-      console.log(exception)
+      logger.defaultLogger(exception)
       resolve(-1)
     })
   })
@@ -71,11 +72,11 @@ const installSoftware = async (ip, pathToKey) => {
       privateKey: pathToKey,
     }).then(() => {
       ssh.execCommand(`chmod +xr /home/${parameters.ec2Username}/image/install.sh && cd /home/${parameters.ec2Username}/image/ && ./install.sh && exit`).then((result) => {
-        console.log(`STDOUT of ${ip}: ${result.stdout}`)
-        console.log(`STDERR of ${ip}: ${result.stderr}`)
+        logger.defaultLogger(`STDOUT of ${ip}: ${result.stdout}`)
+        logger.defaultLogger(`STDERR of ${ip}: ${result.stderr}`)
         resolve(1)
       }).catch((error) => {
-        console.log(error)
+        logger.defaultLogger(error)
         resolve(-1)
       })
     })
@@ -94,8 +95,8 @@ const endDocker = async (ip, pathToKey) => {
     })
     .then(() => {
       ssh.execCommand(`cd /home/${parameters.ec2Username}/image && sudo docker-compose down && exit`).then((result) => {
-        console.log(`STDOUT of ${ip}: ${result.stdout}`)
-        console.log(`STDERR of ${ip}: ${result.stderr}`)
+        logger.defaultLogger(`STDOUT of ${ip}: ${result.stdout}`)
+        logger.defaultLogger(`STDERR of ${ip}: ${result.stderr}`)
         resolve(1)
       })
     })
@@ -119,13 +120,13 @@ const executeMigration = async (fromIp, toIp, pathToKey, key, oldProvider, newPr
     })
     .then(() => {
       ssh.execCommand(`cd /home/${parameters.ec2Username}/image && sudo chmod +xr *.sh && chmod 400 ${key} && ./migration.sh ${toIp} ${key} ${oldProvider} ${newProvider}`).then((result) => {
-        console.log(`STDOUT of ${fromIp}: ${result.stdout}`)
-        console.log(`STDERR of ${fromIp}: ${result.stderr}`)
+        logger.defaultLogger(`STDOUT of ${fromIp}: ${result.stdout}`)
+        logger.defaultLogger(`STDERR of ${fromIp}: ${result.stderr}`)
         resolve(1)
       })
     })
     .catch((exception) => {
-      console.log(exception)
+      logger.defaultLogger(exception)
       resolve(-1)
     })
   })
@@ -151,11 +152,11 @@ const copyKey = async (ip, pathToKey1, pathToKey2, provider) => {
     }).then(() => {
       ssh.putFile(pathToKey2, `/home/${parameters.ec2Username}/image/${keyName}`)
       .then(() => {
-        console.log(`CopyKeyHelper: The key ${pathToKey2} was copied successfully to ${ip}`)
+        logger.defaultLogger(`CopyKeyHelper: The key ${pathToKey2} was copied successfully to ${ip}`)
         resolve(1)
       }, (error) => {
-        console.log(`CopyKeyHelper: The copying of the key ${pathToKey2} to ${ip} failed`)
-        console.log(error)
+        logger.defaultLogger(`CopyKeyHelper: The copying of the key ${pathToKey2} to ${ip} failed`)
+        logger.defaultLogger(error)
         resolve(-1)
       })
     })
@@ -177,8 +178,8 @@ const deleteKey = async (ip, pathToKey) => {
       privateKey: pathToKey,
     }).then(() => {
       ssh.execCommand(`cd /home/${parameters.ec2Username}/image && rm ${keyName}`).then((result) => {
-        console.log(`STDOUT of ${ip}: ${result.stdout}`)
-        console.log(`STDERR of ${ip}: ${result.stderr}`)
+        logger.defaultLogger(`STDOUT of ${ip}: ${result.stdout}`)
+        logger.defaultLogger(`STDERR of ${ip}: ${result.stderr}`)
         resolve(1)
         
       })

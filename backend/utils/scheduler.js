@@ -5,7 +5,7 @@ let parameters = require('../parameters')
 const mlModel = require('./mlModel')
 const spotInstances = require('./spotInstances')
 const computeEngine = require('./computeEngine')
-
+const logger = require('./logger')
 
 const scheduleCollectSpotPrices = schedule.scheduleJob('59 23 * * *', () => {
 
@@ -16,7 +16,7 @@ const scheduleCollectSpotPrices = schedule.scheduleJob('59 23 * * *', () => {
 
 const checkInstances = schedule.scheduleJob(parameters.checkInstancesNumber, async () => {
 
-  console.log('CheckInstanceHelper: Start checking instances')
+  logger.defaultLogger('CheckInstanceHelper: Start checking instances')
   const imageRows = await databaseHelper.selectAllRows(parameters.imageTableValues, parameters.imageTableName)
   imageRows.map(async image => {
 
@@ -28,7 +28,7 @@ const checkInstances = schedule.scheduleJob(parameters.checkInstancesNumber, asy
       state = image.provider === 'AWS' ?  await spotInstances.getInstanceState(image.zone, [image.spotInstanceId]) : await computeEngine.getStatus(image)
     }
     if(state === 'stopped' && image.status !== 'booting' && image.status !== 'migration' && image.status !== 'simulation' && image.manually === 0){
-      console.log(`CheckInstanceHelper: Reboot image ${image.rowid}`)
+      logger.defaultLogger(`CheckInstanceHelper: Reboot image ${image.rowid}`)
       const migrationHelper = require('./migrationHelper')
       parameters = require('../parameters')
       if(image.provider === 'AWS'){
@@ -47,7 +47,7 @@ const checkInstances = schedule.scheduleJob(parameters.checkInstancesNumber, asy
 
 const trainModels = schedule.scheduleJob('59 23 3 * *', async () => {
 
-  console.log(`TrainModelsHelper: Start with retraining of all existing models`)
+  logger.defaultLogger(`TrainModelsHelper: Start with retraining of all existing models`)
   const models = await databaseHelper.selectAllRows(parameters.modelTableValues, parameters.modelTableName)
   await models.map(async row => {
     await databaseHelper.updateById(parameters.modelTableName, 'status = ?, updatedAt = ?', ['training', Date.now(), row.rowid])
@@ -60,14 +60,14 @@ const trainModels = schedule.scheduleJob('59 23 3 * *', async () => {
 const cancelScheduler = async (image) => {
   const toCancel = schedule.scheduledJobs[image.schedulerName]
   toCancel.cancel()
-  console.log(`CancelSchedulerHelper: Cancelled scheduler of image ${image.rowid}`)
+  logger.defaultLogger(`CancelSchedulerHelper: Cancelled scheduler of image ${image.rowid}`)
   await databaseHelper.updateById(parameters.imageTableName, `schedulerName = ?`, [null, image.rowid])
 
 
 }
 
 const setMigrationScheduler = async (time, model, image, user) => {
-  console.log(`MigrationSchedulerHelper: Set scheduler at ${time} for ${image.rowid}`)
+  logger.defaultLogger(`MigrationSchedulerHelper: Set scheduler at ${time} for ${image.rowid}`)
   const j = schedule.scheduleJob(time, async () => {
     const migrationHelper = require('./migrationHelper')
     const databaseHelper = require('./databaseHelper')
@@ -80,7 +80,7 @@ const setMigrationScheduler = async (time, model, image, user) => {
     if(imageRow === null){
       return
     }
-    console.log(`MigrationSchedulerHelper: Start with evaluation of image ${imageRow.rowid}`)
+    logger.defaultLogger(`MigrationSchedulerHelper: Start with evaluation of image ${imageRow.rowid}`)
     let state = null
 
     if(image.simulation === 1) {
@@ -91,7 +91,7 @@ const setMigrationScheduler = async (time, model, image, user) => {
     if(state === 'running' || state === 'simulation'){
       await migrationHelper.newInstance(model, imageRow, user)
     }else{
-      console.log(`MigrationSchedulerHelper: Image ${imageRow.rowid} is currently not active`)
+      logger.defaultLogger(`MigrationSchedulerHelper: Image ${imageRow.rowid} is currently not active`)
     }
    
 

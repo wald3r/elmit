@@ -9,6 +9,7 @@ const spotPrices = require('./spotPrices')
 const billingHelper = require('./billingHelper')
 const fileHelper = require('./fileHelper')
 const computeEngine = require ('./computeEngine')
+const logger = require('./logger')
 
 const getPrediction = async (model, image, user, engineCost) => {
   
@@ -75,7 +76,7 @@ const requestEC2Instance = async(model, image, zone) => {
       return false
     }
     await spotInstances.getPublicIpFromRequest(instanceIds, image.rowid)
-    console.log(`InstanceBootHelper: Waiting for instance ${instanceIds} to boot`)
+    logger.defaultLogger(`InstanceBootHelper: Waiting for instance ${instanceIds} to boot`)
     await spotInstances.waitForInstanceToBoot(instanceIds)
     return true
   }else{
@@ -138,11 +139,11 @@ const setSchedulerAgain = async (image, model, user, time) => {
   let hoursToMs = parameters.migrationHour * 3600 * 1000
   let minToMs = parameters.migrationMinutes * 60 * 1000
   if(Date.now() > (time+hoursToMs+minToMs)){
-    console.log(`ChangeSchedulerHelper: Set new scheduler time for ${image.rowid}`)
+    logger.defaultLogger(`ChangeSchedulerHelper: Set new scheduler time for ${image.rowid}`)
     const newTime = Date.now() + (2 * 60 * 1000)
     scheduler.setMigrationScheduler(new Date(newTime), model, image, user)
   }else{
-    console.log(`ChangeSchedulerHelper: Set old scheduler time for ${image.rowid}`)
+    logger.defaultLogger(`ChangeSchedulerHelper: Set old scheduler time for ${image.rowid}`)
     scheduler.setMigrationScheduler(new Date(time+hoursToMs+minToMs), model, image, user)
   }
 
@@ -154,7 +155,7 @@ const newInstance = async (model, image, user) => {
   const machineType = await computeEngine.findMachineType(instance_information[1], instance_information[2])
   const engineCost = await billingHelper.getEnginePrice(machineType.metadata.name.substring(0,2).toUpperCase(), machineType.metadata.guestCpus, machineType.metadata.memoryMb / 1024)
   const prediction = await getPrediction(model, image, user, engineCost)
-  console.log(`MigrationHelper: Instance will boot in ${prediction.zone} ${prediction.provider}`)
+  logger.defaultLogger(`MigrationHelper: Instance will boot in ${prediction.zone} ${prediction.provider}`)
   if(prediction.zone !== image.zone){
     if(image.zone !== null){
       await databaseHelper.updateById(parameters.imageTableName, 'status = ?, updatedAt = ?', ['migrating', Date.now(), image.rowid])
@@ -207,7 +208,7 @@ const newInstance = async (model, image, user) => {
       return true
     }
   }else{
-    console.log(`MigrationHelper: No migration of ${image.rowid} needed`)
+    logger.defaultLogger(`MigrationHelper: No migration of ${image.rowid} needed`)
     const imageRow = await databaseHelper.selectById(parameters.imageTableValues, parameters.imageTableName, image.rowid)
     const migrationRows = await databaseHelper.selectRowsByValues(parameters.migrationTableValues, parameters.migrationTableName, 'imageId = ?', [imageRow.rowid])
     const filteredRows = migrationRows.filter(row => row.newZone === null)
@@ -229,7 +230,7 @@ const setupServer = async (image, provider) => {
     await sshConnectionEC2.setUpServer(image.ip, image.key, image.path)
     await sshConnectionEC2.installSoftware(image.ip, image.key)
   }else{
-    console.log(image)
+    logger.defaultLogger(image)
     await sshConnectionEngine.setUpServer(image.ip, image.path)
     await sshConnectionEngine.installSoftware(image.ip)
   }
@@ -241,7 +242,7 @@ const startDocker = async (ip, key, provider) => {
 }
 
 const installSoftware = async(image, provider) => {
-  console.log(provider)
+  logger.defaultLogger(provider)
   provider === 'AWS' ? await sshConnectionEC2.installSoftware(image.ip, image.key) : await sshConnectionEngine.installSoftware(image.ip)
 }
 

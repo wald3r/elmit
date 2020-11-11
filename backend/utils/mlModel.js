@@ -5,6 +5,7 @@ const fs = require('fs')
 const csv = require('csv-parse')
 const computeEngine = require('./computeEngine')
 const billingHelper = require('./billingHelper')
+const logger = require('./logger')
 
 const replace_name = (name) => {
 
@@ -26,10 +27,14 @@ const replace_name = (name) => {
 const trainModel = async (instance, product, region) => {
 
   const python = spawn('python3', [parameters.mlTrainFile, instance, product, region, 2])
-  console.log(`Start training ml model ${instance} ${product}`)
+  logger.mlTrainLogger(`Start training ml model ${instance} ${product}`)
   
+  python.stdout.on('data', (data) => {
+    logger.mlTrainLogger(data.toString())
+  })
+
   python.on('close', async () => {
-    console.log(`Finished training model ${instance} ${product}`)
+    logger.mlTrainLogger(`Finished training model ${instance} ${product}`)
     let outcome = await databaseHelper.selectRowsByValues(parameters.modelTableValues, parameters.modelTableName, 'type = ? AND product = ? AND region = ?', [instance, product, region])  
     await databaseHelper.updateById(parameters.modelTableName, 'status = ?, updatedAt = ?', ['trained', Date.now(), outcome[0].rowid])
   })
@@ -46,10 +51,11 @@ const deletePredictions = (image) => {
 const deleteModel = (instance, product, region) => {
 
   const python = spawn('python3', [parameters.mlDeleteFile, instance, product, region])
-  console.log(`Delete training ml model ${instance} ${product}`)
+  
+  logger.mlDeleteLogger(`Delete training ml model ${instance} ${product}`)
 
   python.stdout.on('data', (data) => {
-    console.log(data.toString())
+    logger.mlDeleteLogger(data.toString())
     const fileToDelete = `${parameters.mlPredictions}${instance}_${replace_name(product)}.csv`
     if (fs.existsSync(fileToDelete)) {
       fs.unlinkSync(fileToDelete)
@@ -71,7 +77,11 @@ function sortFunction(a, b) {
 
 const predictModel = async (instance, product, image, user, region, engineCost) => {
   const python = spawn('python3', [parameters.mlPredictFile, instance, product, image.rowid, region, 2])
-  console.log(`Started prediction of ml model ${instance} ${product}`)
+  logger.mlPredictionLogger(`Started prediction of ml model ${instance} ${product}`)
+
+  python.stdout.on('data', async(data) => {
+    logger.mlPredictionLogger(data.toString())
+  })
 
   return await new Promise((resolve) => {
     python.stdout.on('close', async () => {

@@ -5,14 +5,15 @@ const image = require('../models/image')
 const model = require('../models/model')
 const migration = require('../models/migration')
 const billing = require('../models/billing')
+const logger = require('./logger')
 
 const checkDatabase = async () => {
   db = await openDatabase()
   db.exec('PRAGMA foreign_keys = ON', (err)=> {
     if(err){
-      console.log(`PragmaHelper: ${err}`)
+      logger.databaseLogger(`PragmaHelper: ${err}`)
     }else{
-      console.log('PragmaHelper: Activated foreign keys')
+      logger.databaseLogger('PragmaHelper: Activated foreign keys')
     }
   })
   createTable(db, parameters.migrationTableName, migration.migrationModel)
@@ -74,7 +75,7 @@ const insertRow = async(tableName, tableValues, params) => {
       const stmt = db.prepare(`INSERT INTO ${tableName} VALUES ${tableValues}`)
       stmt.run(params, function(err){
         if(err){
-          console.log(err)
+          logger.databaseLogger(err)
           stmt.finalize()
           resolve(-1)
         }else{ 
@@ -98,7 +99,7 @@ const updateById = async(tableName, tableValues, params) => {
         console.error(`${tableName}: ${err.message}`)
         resolve(500)
       }else{
-        console.log(`${tableName}: Row ${params[params.length-1]} updated with ${params}`)
+        logger.databaseLogger(`${tableName}: Row ${params[params.length-1]} updated with ${params}`)
         resolve(200)
       }
     })
@@ -116,7 +117,7 @@ const selectById = async(tableValues, tableName, id) => {
         console.error(`${tableName}: ${err.message}`)
         resolve()
       }else if (row === undefined) {
-        console.log(`No entry under rowid ${id}`)
+        logger.databaseLogger(`No entry under rowid ${id}`)
         resolve()
       }else{
         newRow = row
@@ -231,7 +232,7 @@ const selectByUsername = async(tableValues, tableName, username) => {
         console.error(`${tableName}: ${err.message}`)
         resolve(null)
       }else if (row === undefined) {
-        console.log(`No entry under username ${username}`)
+        logger.databaseLogger(`No entry under username ${username}`)
         resolve(null)
       }else{
         resolve(row)
@@ -253,7 +254,7 @@ const deleteRowById = async (tableName, id) => {
         console.error(`${tableName}: ${err.message}`)
         resolve(-1)
       }else{
-        console.log(`${tableName}: Row deleted ${id}`)
+        logger.databaseLogger(`${tableName}: Row deleted ${id}`)
         resolve(1)
       }
     })
@@ -271,7 +272,7 @@ const deleteRowsByValue = async (tableName, param, value) => {
         console.error(`${tableName}: ${err.message}`)
         resolve(-1)
       }else{
-        console.log(`${tableName}: Rows with ${value} ${param} deleted`)
+        logger.databaseLogger(`${tableName}: Rows with ${value} ${param} deleted`)
         resolve(1)
       }
     })

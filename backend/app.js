@@ -17,18 +17,16 @@ const migrationHelper = require('./utils/migrationHelper')
 const parameters = require('./parameters')
 const keyRouter = require('./controllers/keyController')
 const migrationRouter = require('./controllers/migrationController')
-const spotInstances = require('./utils/spotInstances')
-const computeEngine = require('./utils/computeEngine')
-const billingHelper = require('./utils/billingHelper')
 const limiter = require('./middleware/limiter')
+const logger = require('./utils/logger')
 
 const credentialsChecker = async () => {
   
   const path = `${process.env['HOME']}/.aws/credentials`
   if (fs.existsSync(path)){
-    console.log('CredentialsHelper: Credentials found!')
+    logger.defaultLogger('CredentialsHelper: Credentials found!')
   } else{
-    console.log('CredentialsHelper: Credentials can not be found. Add credentials to ~/.aws/credentials and try again.')
+    logger.defaultLogger('CredentialsHelper: Credentials can not be found. Add credentials to ~/.aws/credentials and try again.')
     process.exit(1)
   }
 }
@@ -47,11 +45,10 @@ const checkMigrationStatus = async () => {
     const userRow = await databaseHelper.selectById(parameters.userTableValues, parameters.userTableName, imageRow.userId)
     await migrationHelper.setSchedulerAgain(imageRow, modelRow, userRow, migRow.updatedAt)
   })
-  console.log(`MigrationStatusHelper: Set ${migrationRows.length} open schedulers`)
+  
+  logger.defaultLogger(`MigrationStatusHelper: Set ${migrationRows.length} open schedulers`)
 }
 
-//billingHelper.getEnginePrice('N2', 2, 8)
-//computeEngine.findMachineType(2, 8)
 credentialsChecker()
 databaseHelper.checkDatabase()
 scheduler.checkInstances

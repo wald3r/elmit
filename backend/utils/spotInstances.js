@@ -4,6 +4,7 @@ const databaseHelper = require('./databaseHelper')
 const fileHelper = require('./fileHelper')
 const fs = require('fs')
 const csv = require('csv-parse')
+const logger = require('./logger')
 
 let AWSRegion = 'us-east-1'
 
@@ -25,7 +26,7 @@ const getEC2Object = async () => {
   await new Promise((resolve) => {
     AWS.config.getCredentials((err) => {
       if (err) {
-        console.log(`SpotInstanceHelper: ${err.message}`)
+        logger.spotLogger(`SpotInstanceHelper: ${err.message}`)
         resolve()
       }else {
         resolve()
@@ -88,10 +89,10 @@ const stopInstance = async (id, zone) => {
   let promise = await new Promise((resolve) => {
     ec2.stopInstances({InstanceIds: [id]}, (err, data) => {
       if (err) {
-        console.log(`StopInstanceHelper: ${err.message}`)
+        logger.spotLogger(`StopInstanceHelper: ${err.message}`)
         resolve(-1)
       }else {
-        console.log(`StopInstanceHelper: ${id} is stopping`)
+        logger.spotLogger(`StopInstanceHelper: ${id} is stopping`)
         resolve(1)
       }
     })
@@ -108,10 +109,10 @@ const startInstance = async (id, zone) => {
   let promise = await new Promise((resolve) => {
     ec2.startInstances({InstanceIds: [id]}, (err, data) => {
       if (err) {
-        console.log(`StartInstanceHelper: ${err.message}`)
+        logger.spotLogger(`StartInstanceHelper: ${err.message}`)
         resolve(-1)
       }else {
-        console.log(`StartInstanceHelper: ${id} is starting`)
+        logger.spotLogger(`StartInstanceHelper: ${id} is starting`)
         resolve(1)
       }
     })
@@ -143,7 +144,7 @@ const describeSecurityGroups = async (id) => {
  return await new Promise((resolve) => {
   ec2.describeSecurityGroups(params, (err, data) => {
     if (err) {
-      console.log(`DescribeSecurityGroupHelper: ${err.message}`)
+      logger.spotLogger(`DescribeSecurityGroupHelper: ${err.message}`)
       resolve(undefined)
     }else resolve(data)
   })
@@ -174,7 +175,7 @@ const authorizeSecurityGroupIngress = async (securityGroupId, port) => {
 
   ec2.authorizeSecurityGroupIngress(paramsIngress, (err, data) => {
     if (err) {
-      console.log(`AuthorizeSecurityGroupIngressHelper: ${err.message}`)
+      logger.spotLogger(`AuthorizeSecurityGroupIngressHelper: ${err.message}`)
     }
   })
 }
@@ -186,11 +187,11 @@ const createSecurityGroup = async (zone, port, id) => {
   
   const securityGroup = await describeSecurityGroups(id)
   if(securityGroup === undefined){
-    console.log(`SecurityGroupHelper: Create security group for ${zone}`)
+    logger.spotLogger(`SecurityGroupHelper: Create security group for ${zone}`)
     return await new Promise((resolve) => {
       ec2.describeVpcs((err, data) => {
         if (err) {
-          console.log(`SecurityGroupHelper: ${err.message}`)
+          logger.spotLogger(`SecurityGroupHelper: ${err.message}`)
         }else {
           vpc = data.Vpcs[0].VpcId
           const paramsSecurityGroup = {
@@ -200,7 +201,7 @@ const createSecurityGroup = async (zone, port, id) => {
           }
           ec2.createSecurityGroup(paramsSecurityGroup, async (err, data) => {
             if (err) {
-              console.log(`SecurityGroupHelper: ${err.message}`)
+              logger.spotLogger(`SecurityGroupHelper: ${err.message}`)
             } else {
                 const SecurityGroupId = data.GroupId
                 await authorizeSecurityGroupIngress(SecurityGroupId, port)
@@ -212,7 +213,7 @@ const createSecurityGroup = async (zone, port, id) => {
     })
   }
   else{
-    console.log(`SecurityGroupHelper: Security group for ${zone} already exists`)
+    logger.spotLogger(`SecurityGroupHelper: Security group for ${zone} already exists`)
     return securityGroup.SecurityGroups[0].GroupId
   }
 }
@@ -229,8 +230,8 @@ const deleteSecurityGroup = async (zone, id) => {
   }
 
   ec2.deleteSecurityGroup(params, (err, data) => {
-    if (err) console.log(`DeleteSecurityGroupHelper: ${err.message}`)
-    else     console.log(`DeleteSecurityGroupHelper: Security group in ${zone} deleted`)
+    if (err) logger.spotLogger(`DeleteSecurityGroupHelper: ${err.message}`)
+    else     logger.spotLogger(`DeleteSecurityGroupHelper: Security group in ${zone} deleted`)
   })
 }
 
@@ -244,7 +245,7 @@ const createKeyPair = async (path, rowid) => {
   }
 
   ec2.createKeyPair(params, (err, data) => {
-    if (err) console.log(`CreateKeyPairHelper: ${err.message}`)
+    if (err) logger.spotLogger(`CreateKeyPairHelper: ${err.message}`)
     else {
       fileHelper.createKeyFile(data, path)         
     }
@@ -262,7 +263,7 @@ const deleteKeyPair = async (zone, path, rowid) => {
   }
   return await new Promise(async (resolve) => {
     await ec2.deleteKeyPair(params, async (err) => {
-      if (err) console.log(`DeleteKeyPairHelper: ${err.message}`)
+      if (err) logger.spotLogger(`DeleteKeyPairHelper: ${err.message}`)
       else { 
         await fileHelper.deleteFile(path)
         resolve()
@@ -289,7 +290,7 @@ const getInstanceIds = async (id, rowid) => {
     await new Promise((resolve) => {
       ec2.describeSpotInstanceRequests(params, async (err, data) =>  {
       if (err) {
-        console.log(`SpotInstanceHelper: ${err.message}`)
+        logger.spotLogger(`SpotInstanceHelper: ${err.message}`)
         resolve(undefined)
       }else{
           data.SpotInstanceRequests.map(instance => {
@@ -301,7 +302,7 @@ const getInstanceIds = async (id, rowid) => {
     })
     await new Promise((resolve) => {
       setTimeout(() => { 
-        console.log('SpotInstanceHelper: Waiting for instance id')
+        logger.spotLogger('SpotInstanceHelper: Waiting for instance id')
         resolve()
       }, 3000)
     })
@@ -326,7 +327,7 @@ const waitForInstanceToBoot = async (ids) => {
     await new Promise((resolve) => {
       ec2.describeInstanceStatus({ InstanceIds: ids, IncludeAllInstances: true }, async (err, data) => {
         if (err) {
-          console.log(`SpotInstanceBootHelper: ${err.message}`)
+          logger.spotLogger(`SpotInstanceBootHelper: ${err.message}`)
           resolve(status) 
         }
         else {
@@ -349,8 +350,8 @@ const rebootInstance = async (zone, id) => {
     ]
    }
    ec2.rebootInstances(params, (err, data) => {
-     if (err) console.log(`RebootInstanceHelper: ${err.message}`)
-     else     console.log(`RebootInstanceHelper: ${id} is rebooting`)
+     if (err) logger.spotLogger(`RebootInstanceHelper: ${err.message}`)
+     else     logger.spotLogger(`RebootInstanceHelper: ${id} is rebooting`)
    })
 }
 
@@ -361,7 +362,7 @@ const getInstanceStatus = async (zone, ids) => {
 
   return await new Promise((resolve) => {
     ec2.describeInstanceStatus({ InstanceIds: ids, IncludeAllInstances: true }, async (err, data) => {
-      if (err) console.log(`SpotInstanceHelper: ${err.message}`) 
+      if (err) logger.spotLogger(`SpotInstanceHelper: ${err.message}`) 
       else {
         status = data.InstanceStatuses[0].InstanceStatus.Status
         resolve(status)
@@ -378,7 +379,7 @@ const getInstanceState = async (zone, ids) => {
 
   return await new Promise((resolve) => {
     ec2.describeInstanceStatus({ InstanceIds: ids, IncludeAllInstances: true }, async (err, data) => {
-      if (err) console.log(`SpotInstanceHelper: ${err.message}`) 
+      if (err) logger.spotLogger(`SpotInstanceHelper: ${err.message}`) 
       else {
         status = data.InstanceStatuses[0].InstanceState.Name
         resolve(status)
@@ -397,7 +398,7 @@ const requestSpotInstance = async (instance, zone, product, bidprice, simulation
   if(!isSimulation(simulation)){
     securityGroupId = await createSecurityGroup(zone, port, id)
     await createKeyPair(keyPath, id)
-    console.log(`ImageDescribeHelper: For ${zone} the following image was chosen: ${imageId}`) 
+    logger.spotLogger(`ImageDescribeHelper: For ${zone} the following image was chosen: ${imageId}`) 
   } 
   
   let params = {
@@ -422,7 +423,7 @@ const requestSpotInstance = async (instance, zone, product, bidprice, simulation
   return await new Promise((resolve) => {
     ec2.requestSpotInstances(params, async (err, data) => {
       if (err) {
-        console.log(`SpotInstanceHelper: ${err.message}`)
+        logger.spotLogger(`SpotInstanceHelper: ${err.message}`)
         resolve(null)
       }
       else{
@@ -441,7 +442,7 @@ const getPublicIpFromRequest = async (instanceIds, rowid) => {
 
   return await new Promise((resolve) => {
     ec2.describeInstances({ InstanceIds: instanceIds }, async (err, data) => {
-      if (err) console.log(`SpotInstanceHelper: ${err.message}`) 
+      if (err) logger.spotLogger(`SpotInstanceHelper: ${err.message}`) 
       else {
         const ip = data.Reservations[0].Instances[0].PublicIpAddress
         await databaseHelper.updateById(parameters.imageTableName, 'ip = ?, updatedAt = ?', [ip, Date.now(), rowid])
@@ -457,13 +458,13 @@ const cancelSpotInstance = async (image) => {
   const ec2 = await getEC2Object()
   
   ec2.terminateInstances({ InstanceIds: [image.spotInstanceId] }, (err, data) => {
-    if (err) console.log(`SpotInstanceHelper: ${err.message}`)
-    else     console.log(data)
+    if (err) logger.spotLogger(`SpotInstanceHelper: ${err.message}`)
+    else     logger.spotLogger(data)
   })
 
   ec2.cancelSpotInstanceRequests({ SpotInstanceRequestIds: [image.requestId] }, (err, data) => {
-    if (err) console.log(`SpotInstanceHelper: ${err.message}`)
-    else     console.log(data)         
+    if (err) logger.spotLogger(`SpotInstanceHelper: ${err.message}`)
+    else     logger.spotLogger(data)         
         
   })
   

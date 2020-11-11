@@ -2,6 +2,7 @@ const fs = require('fs')
 const Path = require('path')
 const parameters = require('../parameters')
 const exec = require('child_process').exec
+const logger = require('./logger')
 
 const deleteFolderRecursively = (path) => {
   if (fs.existsSync(path)) {
@@ -29,14 +30,14 @@ const createDirectory = async (path, file) => {
     dirParts.map(folder => {
       let length = dirParts.length
       if(folder === dirParts[length-1]){
-        console.log(`DirectoryCreaterHelper: ${folder} is not a folder`)
+        logger.defaultLogger(`DirectoryCreaterHelper: ${folder} is not a folder`)
       }else{
         totalPath = `${totalPath}/${folder}`
         if (!fs.existsSync(totalPath)){
           fs.mkdirSync(totalPath, { recursive: true })
-          console.log(`DirectoryCreaterHelper: ${folder} folder created`)
+          logger.defaultLogger(`DirectoryCreaterHelper: ${folder} folder created`)
         } else{
-          console.log(`DirectoryCreaterHelper: ${folder} folder already exists`)
+          logger.defaultLogger(`DirectoryCreaterHelper: ${folder} folder already exists`)
         }
       }
       if(dirParts[dirParts.length -1] === folder){
@@ -49,11 +50,11 @@ const createDirectory = async (path, file) => {
   await new Promise((resolve) => {
     file.mv(`${totalPath}/${list[list.length-1]}`, err => {
       if (err){
-        console.log(`DirectoryCreaterHelper: ${file.name} could not save file`)
+        logger.defaultLogger(`DirectoryCreaterHelper: ${file.name} could not save file`)
         answer = false
         resolve()
       }else{
-        console.log(`DirectoryCreaterHelper: ${file.name} file saved`)
+        logger.defaultLogger(`DirectoryCreaterHelper: ${file.name} file saved`)
       }
       resolve()
     })
@@ -70,7 +71,7 @@ const deleteFile = async (path) => {
   }
   return await new Promise((resolve) => {
     fs.unlink(path, (err) => {
-      if (err) console.log(`FileDeleteHelper: ${err.message}`)
+      if (err) logger.defaultLogger(`FileDeleteHelper: ${err.message}`)
       resolve()
     })
   })
@@ -79,7 +80,7 @@ const deleteFile = async (path) => {
 
 const renameFile = (oldFile, newFile) => {
   fs.rename(oldFile, newFile, (err) => {
-    if (err) console.log(`FileRenameHelper: ${err.message}`)
+    if (err) logger.defaultLogger(`FileRenameHelper: ${err.message}`)
   })
 }
 
@@ -91,8 +92,8 @@ const createPath = (path) => {
 
 const copyFile = (filepath1, filepath2, filename) => {
   fs.copyFile(filepath1, filepath2+filename, (err) => {
-    if(err) console.log(`CopyFileHelper: Could not copy file to ${filepath2+filename}`)
-    else console.log(`CopyFileHelper: Copied file to ${filepath2+filename}`)
+    if(err) logger.defaultLogger(`CopyFileHelper: Could not copy file to ${filepath2+filename}`)
+    else logger.defaultLogger(`CopyFileHelper: Copied file to ${filepath2+filename}`)
   })
 }
 
@@ -103,13 +104,13 @@ const executeFile = async (path, arg) => {
 
 
 
-  console.log(path, arg)
+  logger.defaultLogger(path, arg)
   const shellScript = exec(`sh ${path} ${arg}`)
   
 
   await new Promise((resolve) => {
     shellScript.on('close', async () => {
-      console.log('Workaround file executed')
+      logger.defaultLogger('Workaround file executed')
       resolve()
     })
   })
@@ -124,13 +125,13 @@ const createKeyFile = async (key, path) => {
       finalPath = finalPath.replace('.pem', '_1.pem')
     }
     fs.writeFile(finalPath, key.KeyMaterial, (err) => {
-      if (err) console.log(`KeyCreatorHelper: ${err.message}`)
+      if (err) logger.defaultLogger(`KeyCreatorHelper: ${err.message}`)
       resolve()  
     })
   })
   
   fs.chmod(finalPath, 0o400, (err) => {
-    if (err) console.log(`KeyCreatorHelper: ${err.message}`)
+    if (err) logger.defaultLogger(`KeyCreatorHelper: ${err.message}`)
   })
   
 }

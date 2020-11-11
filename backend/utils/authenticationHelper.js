@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken')
 const databaseHelper = require('../utils/databaseHelper')
 const parameters = require('../parameters')
-
+const logger = require('./logger')
 /**
  * Verify if user is logged in  
  * @param {*} token 
@@ -17,7 +17,7 @@ const isLoggedIn = async (token) => {
     }
     userRow = await databaseHelper.selectById(parameters.userTableValues, parameters.userTableName, decodedToken.rowid)
   }catch(exception){
-    console.error(`Authentication Helper: ${exception.message}`)
+    logger.defaultLogger(`Authentication Helper: ${exception.message}`)
   }
   if(userRow === null || userRow === undefined){
     return null

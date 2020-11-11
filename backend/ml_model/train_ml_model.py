@@ -49,7 +49,9 @@ def main():
     instance_type = str(sys.argv[1])
     product_description = str(sys.argv[2])
 
-    training_file = '/training_data/'+instance_type+'_'+productDescription+'_v1.csv'
+    path = os.path.normpath(os.getcwd() + os.sep + os.pardir)
+    training_file = path + '/backend/training_data/'+instance_type+'_'+replace_name(product_description)+'_v1.csv'
+
     gen = GenerateTrainingData(training_file)
 
 
