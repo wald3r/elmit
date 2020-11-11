@@ -17,6 +17,7 @@ const migrationHelper = require('./utils/migrationHelper')
 const parameters = require('./parameters')
 const keyRouter = require('./controllers/keyController')
 const migrationRouter = require('./controllers/migrationController')
+const appRouter = require('./controllers/app')
 const limiter = require('./middleware/limiter')
 const logger = require('./utils/logger')
 
@@ -61,6 +62,9 @@ app.use(cors())
 app.use(bodyparser.json())
 app.use(fileUpload())
 app.use(auth.getTokenFrom)
+if(process.env.NODE_ENV === 'pro'){
+  app.use('/', appRouter)
+}
 app.use('/api/models', modelsRouter)
 app.use('/api/images', imagesRouter)
 app.use('/api/login', loginRouter)
