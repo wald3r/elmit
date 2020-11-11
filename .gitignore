@@ -10,8 +10,10 @@ elmit.pem
 /backend/spot_pricing/aws_spot_pricing.csv
 /backend/spot_pricing/pricing_history/*
 /backend/parameters.js
+/backend/training_data/*
 
+
+/backend/logfiles/development/*
+/backend/logfiles/production/*
 /frontend/node_modules/*
-
-
-
+*.db

@@ -1,4 +1,0 @@
-11-11-2020 21:15:43.246 INFO  Delete training ml model r5.4xlarge Linux/UNIX 
-11-11-2020 21:15:47.951 INFO  Could not delete /home/walder/workspace/automatic_migration/backend/ml_model/models/r5.4xlarge_Linux-Unix_worldwide - No such file or directory
-Ml model r5.4xlarge Linux/UNIX deleted
- 
