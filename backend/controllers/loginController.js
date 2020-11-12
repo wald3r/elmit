@@ -18,6 +18,10 @@ loginRouter.post('/', async(request, response) => {
   if(!passwordCorrect){
     return response.status(401).send('wrong password')
   }
+
+  if(userRow.activated === 0){
+    return response.status(401).send('not activated')
+  }
   const userForToken = {
     rowid: userRow.rowid,
     username: userRow.username

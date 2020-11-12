@@ -35,11 +35,11 @@ class MLModel(object):
                 model = model_from_json(f.read())
 
             model.load_weights(path+self.weights_name)
-            print('Model loaded')
+            print('Model %s loaded', % folder_name)
             return model
 
         except:
-            print('No model can be found')
+            print('No model %s can be found', % folder_name)
             return None
 
 
@@ -54,7 +54,7 @@ class MLModel(object):
         with open(path+self.architecture_name, 'w') as f:
             f.write(model.to_json())
 
-        print('Model saved!')
+        print('Model %s saved!', % folder_name)
 
     def delete_model(self):
 
