@@ -192,7 +192,7 @@ const newInstance = async (model, image, user) => {
         
         image.provider === 'AWS' ? await billingHelper.getCosts(model.type, model.product, image.zone, row.updatedAt, billingRow.rowid, migrationRows[0].startZone, row.startProvider) : null
       })
-      await setScheduler(newImage, model, user, true, migrationRows[0].startZone, prediction, machineType.metadata.name.substring(0,2).toUpperCase(), machineType.metadata.guestCpus, machineType.metadata.memoryMb / 1024, prediction.provider)
+      await setScheduler(newImage, model, user, true, migrationRows[0].startZone, prediction, machineType !== null ? machineType.metadata.name.substring(0,2).toUpperCase() : null, machineType !== null ? machineType.metadata.guestCpus : null, machineType !== null ? machineType.metadata.memoryMb / 1024 : null, prediction.provider)
 
       return true
 
@@ -203,7 +203,7 @@ const newInstance = async (model, image, user) => {
         await startDocker(newImage.ip, newImage.key, prediction.provider)
         await databaseHelper.updateById(parameters.imageTableName, 'status = ?, updatedAt = ?', ['running', Date.now(), image.rowid])
       }
-      await setScheduler(image, model, user, true, prediction.zone, prediction, machineType.metadata.name.substring(0,2).toUpperCase(), machineType.metadata.guestCpus, machineType.metadata.memoryMb / 1024, prediction.provider)
+      await setScheduler(image, model, user, true, prediction.zone, prediction, machineType !== null ? machineType.metadata.name.substring(0,2).toUpperCase() : null, machineType !== null ? machineType.metadata.guestCpus : null, machineType !== null ? machineType.metadata.memoryMb / 1024 : null, prediction.provider)
 
       return true
     }

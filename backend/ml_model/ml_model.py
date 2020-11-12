@@ -116,7 +116,6 @@ class MLModel(object):
                 df_1 = df_1.tail(self.ticks)
                 df_tmp = df_1.append(df_0)
 
-        print(df_tmp)
         df_tmp = df_tmp[['SpotPrice']]
         if(version == 1):
             df_tmp = df_tmp.head(len(df_tmp)-self.test_size) #important for testing
