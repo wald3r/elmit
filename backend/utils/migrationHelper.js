@@ -153,7 +153,7 @@ const newInstance = async (model, image, user) => {
 
   const instance_information = await spotInstances.getInstanceInformation(model.type)
   const machineType = await computeEngine.findMachineType(instance_information[1], instance_information[2])
-  const engineCost = model.region === 'worldwide' ? await billingHelper.getEnginePrice(machineType.metadata.name.substring(0,2).toUpperCase(), machineType.metadata.guestCpus, machineType.metadata.memoryMb / 1024) : {cost: 0, region: 'whatever' }
+  const engineCost = (model.region === 'worldwide' && machineType !== null) ? await billingHelper.getEnginePrice(machineType.metadata.name.substring(0,2).toUpperCase(), machineType.metadata.guestCpus, machineType.metadata.memoryMb / 1024) : {cost: 0, region: 'whatever' }
   const prediction = await getPrediction(model, image, user, engineCost)
   logger.defaultLogger(`MigrationHelper: Instance will boot in ${prediction.zone} ${prediction.provider}`)
   if(prediction.zone !== image.zone){
