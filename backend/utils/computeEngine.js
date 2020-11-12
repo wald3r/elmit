@@ -48,7 +48,7 @@ const createSecurityConfig = async (port) => {
 }
 
 const findMachineType = async (cpu, memory) => {
-  let amemorylow = memory * 0.6
+  let amemorylow = memory
   let amemoryhigh = memory * 1.4
   let list = []
   await new Promise((resolve) => {
@@ -177,7 +177,11 @@ const getStatus = async (image) => {
   let status = null
   await new Promise((resolve) => {
     vm.get((err, vm) => {
-      if(err) logger.spotLogger(`StatusEngineHelper: ${err}`)
+      if(err) {
+        logger.spotLogger(`StatusEngineHelper: ${err}`)
+        status = 'unknown'
+        resolve()
+      }
       else{
        status = vm.metadata.status
        resolve()
