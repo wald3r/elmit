@@ -150,7 +150,7 @@ const ShowModels = ( props ) => {
                 <td id='idModelUpdatedAt'>{convertTime(model.updatedAt)}</td>
                 <td>
                   <Button variant='primary' style={{ display: model.status === 'trained' ? '' : 'none' }} id='idModelsDelete'  data-toggle='tooltip' data-placement='top' title='Run Image' onClick={() => handleRunImage(model)}><i className="fa fa-plus" /></Button>
-                  <Button variant='primary' id='idModelsDelete'  data-toggle='tooltip' data-placement='top' title='Remove Model' onClick={() => handleModelDeletion(model)}><i className="fa fa-trash" /></Button>
+                  <Button variant='primary' style={{ display: props.user.role === 'admin' ? '' : 'none' }} id='idModelsDelete'  data-toggle='tooltip' data-placement='top' title='Remove Model' onClick={() => handleModelDeletion(model)}><i className="fa fa-trash" /></Button>
                 </td>
               </tr>
             </tbody>
@@ -165,6 +165,7 @@ const mapStateToProps = (state) => {
   return {
     models: state.models,
     images: state.images,
+    user: state.user,
   }
 }
 

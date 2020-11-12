@@ -115,7 +115,9 @@ modelsRouter.delete('/:rowid', async(request, response, next) => {
   if(user == undefined){
     return response.status(401).send('Not Authenticated')
   }
-
+  if(user.role !== 'admin'){
+    return response.status(401).send('Not Authenticated')
+  }
   const rowid = request.params.rowid
   await databaseHelper.deleteRowById(parameters.modelTableName, rowid)
   const responseArray = await databaseHelper.selectByValue(parameters.imageTableValues, parameters.imageTableName, 'modelId', rowid)
