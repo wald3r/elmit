@@ -62,7 +62,7 @@ app.use(cors())
 app.use(bodyparser.json())
 app.use(fileUpload())
 app.use(auth.getTokenFrom)
-if(process.env.NODE_ENV === 'pro'){
+if(process.env.NODE_ENV === 'prod'){
   app.use('/', appRouter)
 }
 app.use('/api/models', modelsRouter)
