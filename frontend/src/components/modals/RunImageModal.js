@@ -7,7 +7,7 @@ const RunImageModal = ( { showRunImageModal, setShowRunImageModal, handleRun } )
   const [uploading, setUploading] = useState(false)
   const [files, setFiles] = useState([])
   const [notification, setNotification] = useState('')
-  const [simulation, setSimulation] = useState(false)
+  const [simulation, setSimulation] = useState(true)
   const [bidprice, setBidprice] = useState(null)
   const [port, setPort] = useState(null)
 

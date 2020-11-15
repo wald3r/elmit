@@ -64,12 +64,8 @@ const deleteModel = (instance, product, region) => {
 }
 
 function sortFunction(a, b) {
-  if (a[0] === b[0]) {
-      return 0;
-  }
-  else {
-      return (a[0] < b[0]) ? -1 : 1;
-  }
+
+      return (Number(a[0]) >= Number(b[0])) ? 1 : -1
 }
 
 
@@ -79,6 +75,7 @@ const predictModel = async (instance, product, image, user, region, engineCost) 
   const python = spawn('python3', [parameters.mlPredictFile, instance, product, image.rowid, region, 2])
   logger.mlPredictionLogger(`Started prediction of ml model ${instance} ${product}`)
 
+  
   python.stdout.on('data', async(data) => {
     logger.mlPredictionLogger(data.toString())
   })
@@ -95,7 +92,7 @@ const predictModel = async (instance, product, image, user, region, engineCost) 
         .on('end', async () => {
           results = results.sort(sortFunction)
           let zone = results[0][1]
-          const cost = 1000000//results[0][0]
+          const cost = results[0][0]
 
           let returnValue = null
           let billingId = null
