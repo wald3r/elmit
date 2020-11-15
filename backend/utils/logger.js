@@ -4,7 +4,7 @@ const SimpleNodeLogger = require('simple-node-logger')
 const defaultLogger = (string) => {
 
     const opts = {
-        logFilePath: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
+        logDirectory: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
         fileNamePattern: 'default-<DATE>.log',
         timestampFormat:'DD-MM-YYYY HH:mm:ss.SSS'
     }
@@ -16,7 +16,7 @@ const defaultLogger = (string) => {
 const mlTrainLogger = (string) => {
 
     const opts = {
-        logFilePath: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
+        logDirectory: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
         timestampFormat:'DD-MM-YYYY HH:mm:ss.SSS',
         fileNamePattern: 'mlTraining-<DATE>.log',
     }
@@ -28,7 +28,7 @@ const mlTrainLogger = (string) => {
 const spotLogger = (string) => {
 
     const opts = {
-        logFilePath: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
+        logDirectory: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
         timestampFormat:'DD-MM-YYYY HH:mm:ss.SSS',
         fileNamePattern: 'spotLogger-<DATE>.log',
     }
@@ -40,7 +40,7 @@ const spotLogger = (string) => {
 const databaseLogger = (string) => {
 
     const opts = {
-        logFilePath: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
+        logDirectory: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
         timestampFormat:'DD-MM-YYYY HH:mm:ss.SSS',
         fileNamePattern: 'databaseLogger-<DATE>.log',
     }
@@ -51,7 +51,7 @@ const databaseLogger = (string) => {
 
 const mlPredictionLogger = (string) => {
     const opts = {
-        logFilePath: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
+        logDirectory: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
         timestampFormat:'DD-MM-YYYY HH:mm:ss.SSS',
         fileNamePattern: 'mlPrediction-<DATE>.log',
     }
@@ -62,7 +62,7 @@ const mlPredictionLogger = (string) => {
 
 const mlDeleteLogger = (string) => {
     const opts = {
-        logFilePath: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
+        logDirectory: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
         timestampFormat:'DD-MM-YYYY HH:mm:ss.SSS',
         fileNamePattern: 'mlDelete-<DATE>.log',
     }
