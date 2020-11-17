@@ -97,7 +97,7 @@ const RunImageModal = ( { showRunImageModal, setShowRunImageModal, handleRun } )
                       Simulation
                   </td>
                   <td>
-                    <input id='modelSimulation' autoComplete='off' type='checkbox' disabled onChange={() => setSimulation(!simulation)} />
+                    <input id='modelSimulation' checked autoComplete='off' type='checkbox' disabled onChange={() => setSimulation(!simulation)} />
                   </td>
                 </tr>
               </tbody>

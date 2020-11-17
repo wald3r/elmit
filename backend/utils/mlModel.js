@@ -91,11 +91,12 @@ const predictModel = async (instance, product, image, user, region, engineCost) 
         .on('data', (data) => list.push(data))
         .on('end', async () => {
           const last_column = list[1].length -1
-          const second_last_column = list[1].length -1
-          const results = []
-          for(let o = 0; o < list.length; o++){
-            results.append([list[o][last_column], list[o][second_last_column]])
+          const second_last_column = list[1].length -2
+          let results = []
+          for(let o = 1; o < list.length; o++){
+            results.push([list[o][second_last_column], list[o][last_column]])
           }
+          console.log(results)
           results = results.sort(sortFunction)
           let zone = results[0][1]
           const cost = results[0][0]
