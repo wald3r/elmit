@@ -69,11 +69,18 @@ def main():
     
     file_name = 'predictions/'+instance_type+'_'+rep_product_description+'_'+image_id+'.csv'
     try:
-        os.remove(file_name)
+        if(os.path.isfile(file_name)):
+            df_old = pd.read_csv(file_name, sep=',')
+        else:
+            df_old = pd.Series([])
+        #os.remove(file_name)
     except:
-    	pass
+        df_old = pd.Series([])
+        pass
 
     print(zones)
+    list1 = []
+    list2 = []
     for x in zones:
     #for x in ['ap-southeast-1b']:
 
@@ -100,8 +107,10 @@ def main():
             elif(version == 2):
                 future_predictions = mlobj.predict_future(df, scaler, x)   #predict future
                 prediction = sum(future_predictions)
-                with open(file_name, 'a+') as f:
-                    f.write("%s,%s\n" % (round(prediction, 4), x))
+                list1.append(round(prediction, 4))
+                list2.append(x)
+                #with open(file_name, 'a+') as f:
+                #    f.write("%s,%s\n" % (round(prediction, 4), x))
 
 
       
@@ -109,7 +118,16 @@ def main():
         except:
             print('Skip', str(x))
 
-
+    pd_series1 = pd.Series(list1)
+    pd_series2 = pd.Series(list2)
+    if(len(df_old) == 0):
+        df_old = pd.concat([pd_series1, pd_series2], axis=1)
+    else:
+        df_old = pd.concat([df_old, pd_series1, pd_series2], axis=1)
+    print(df_old)
+    df_old.to_csv(file_name, index=False)
+        #with open(file_name, 'a+') as f:
+                #    f.write("%s,%s\n" % (round(prediction, 4), x))
     exit(0)
 
 if __name__ == "__main__":

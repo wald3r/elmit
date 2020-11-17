@@ -84,12 +84,18 @@ const predictModel = async (instance, product, image, user, region, engineCost) 
     python.stdout.on('close', async () => {
 
       const path = `${parameters.workDir}/predictions/${instance}_${replace_name(product)}_${image.rowid}.csv`
-      let results = []
+      let list = []
 
       await fs.createReadStream(path)
         .pipe(csv())
-        .on('data', (data) => results.push(data))
+        .on('data', (data) => list.push(data))
         .on('end', async () => {
+          const last_column = list[1].length -1
+          const second_last_column = list[1].length -1
+          const results = []
+          for(let o = 0; o < list.length; o++){
+            results.append([list[o][last_column], list[o][second_last_column]])
+          }
           results = results.sort(sortFunction)
           let zone = results[0][1]
           const cost = results[0][0]

@@ -20,6 +20,7 @@ const migrationRouter = require('./controllers/migrationController')
 const appRouter = require('./controllers/app')
 const limiter = require('./middleware/limiter')
 const logger = require('./utils/logger')
+const helmet = require('helmet')
 
 const credentialsChecker = async () => {
   
@@ -59,6 +60,7 @@ app.use(express.static('build'))
 app.use('/api/login', limiter.loginLimiter)
 app.use('/api/registration', limiter.accountLimiter)
 app.use(cors())
+app.use(helmet())
 app.use(bodyparser.json())
 app.use(fileUpload())
 app.use(auth.getTokenFrom)
