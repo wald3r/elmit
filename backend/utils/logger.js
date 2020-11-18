@@ -25,6 +25,19 @@ const mlTrainLogger = (string) => {
     log.info(string)
 }
 
+
+const billingLogger = (string) => {
+
+    const opts = {
+        logDirectory: process.env.NODE_ENV === 'prod' ? 'logfiles/production' : 'logfiles/development',
+        timestampFormat:'DD-MM-YYYY HH:mm:ss.SSS',
+        fileNamePattern: 'billing-<DATE>.log',
+    }
+    const log = SimpleNodeLogger.createRollingFileLogger( opts )
+    log.setLevel('info')
+    log.info(string)
+}
+
 const spotLogger = (string) => {
 
     const opts = {
@@ -73,4 +86,4 @@ const mlDeleteLogger = (string) => {
 
 
 
-module.exports = { mlTrainLogger, mlPredictionLogger, mlDeleteLogger, defaultLogger, spotLogger, databaseLogger }
+module.exports = { billingLogger, mlTrainLogger, mlPredictionLogger, mlDeleteLogger, defaultLogger, spotLogger, databaseLogger }
