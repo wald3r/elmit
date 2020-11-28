@@ -96,7 +96,7 @@ const predictModel = async (instance, product, image, user, region, engineCost) 
           for(let o = 1; o < list.length; o++){
             results.push([list[o][second_last_column], list[o][last_column]])
           }
-          console.log(results)
+          logger.defaultLogger(results)
           results = results.sort(sortFunction)
           let zone = results[0][1]
           const cost = results[0][0]

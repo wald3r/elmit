@@ -8,9 +8,12 @@ const logger = require('./logger')
 
 const getCosts = async (instance, product, zone, start, rowid, startZone, startProvider) => {
   
-  const python = spawn('python3', [parameters.billingFile, instance, product, zone, start, rowid, startZone, startProvider])
+  const python = spawn('python3', [parameters.billingFile, instance, product, zone, start, rowid, startZone, startProvider, Date.now()])
   logger.defaultLogger(`BillingHelper: Start calculating costs of ${instance} ${product} ${zone} ${start} ${startZone} ${startProvider}`)
 
+  python.on('data', async(data) => {
+    logger.billingLogger(data.toString())
+  })
   
   python.on('close', async () => {
     logger.defaultLogger(`BillingHelper: Finished calculating costs of ${instance} ${product} ${zone} ${start} ${startProvider}`)
