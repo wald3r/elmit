@@ -47,14 +47,22 @@ const checkMigrationStatus = async () => {
     const userRow = await databaseHelper.selectById(parameters.userTableValues, parameters.userTableName, imageRow.userId)
     await migrationHelper.setSchedulerAgain(imageRow, modelRow, userRow, migRow.updatedAt)
   })
-  
+
+  let migrationImages = await databaseHelper.selectByValue(parameters.imageTableValues, parameters.imageTableName, "status = ?", ["migration"])
+  await migrationImages.map(async row => {
+
+    const modelRow = await databaseHelper.selectById(parameters.modelTableValues, parameters.modelTableName, row.modelId)
+    const userRow = await databaseHelper.selectById(parameters.userTableValues, parameters.userTableName, row.userId)
+    await migrationHelper.setSchedulerAgain(row, modelRow, userRow, Date.now())
+
+  })
   logger.defaultLogger(`MigrationStatusHelper: Set ${migrationRows.length} open schedulers`)
 }
 
 credentialsChecker()
 databaseHelper.checkDatabase()
 scheduler.checkInstances
-//scheduler.scheduleCollectSpotPrices
+scheduler.scheduleCollectSpotPrices
 scheduler.trainModels
 app.use(express.static('build'))
 app.use('/api/login', limiter.loginLimiter)
