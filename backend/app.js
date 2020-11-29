@@ -43,10 +43,11 @@ const checkMigrationStatus = async () => {
   })
   await migrationRows.map(async migRow => {
     const imageRow = await databaseHelper.selectById(parameters.imageTableValues, parameters.imageTableName, migRow.imageId)
-
-    const modelRow = await databaseHelper.selectById(parameters.modelTableValues, parameters.modelTableName, imageRow.modelId)
-    const userRow = await databaseHelper.selectById(parameters.userTableValues, parameters.userTableName, imageRow.userId)
-    await migrationHelper.setSchedulerAgain(imageRow, modelRow, userRow, migRow.updatedAt)
+    if(imageRow !== null){
+      const modelRow = await databaseHelper.selectById(parameters.modelTableValues, parameters.modelTableName, imageRow.modelId)
+      const userRow = await databaseHelper.selectById(parameters.userTableValues, parameters.userTableName, imageRow.userId)
+      await migrationHelper.setSchedulerAgain(imageRow, modelRow, userRow, migRow.updatedAt)
+    }
   })
 
   let migrationImages = await databaseHelper.selectByValue(parameters.imageTableValues, parameters.imageTableName, "status", ["migrating"])
