@@ -68,6 +68,8 @@ const cancelScheduler = async (image) => {
 
 const setMigrationScheduler = async (time, model, image, user) => {
   logger.defaultLogger(`MigrationSchedulerHelper: Set scheduler at ${time} for ${image.rowid}`)
+
+
   const j = schedule.scheduleJob(time, async () => {
     const migrationHelper = require('./migrationHelper')
     const databaseHelper = require('./databaseHelper')

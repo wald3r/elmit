@@ -134,13 +134,13 @@ const setScheduler = async (image, model, user, flag, startZone, prediction, eng
 
 }
 
-const setSchedulerAgain = async (image, model, user, time) => {
+const setSchedulerAgain = async (image, model, user, time, counter) => {
 
   let hoursToMs = parameters.migrationHour * 3600 * 1000
   let minToMs = parameters.migrationMinutes * 60 * 1000
   if(Date.now() > (time+hoursToMs+minToMs)){
     logger.defaultLogger(`ChangeSchedulerHelper: Set new scheduler time for ${image.rowid}`)
-    const newTime = Date.now() + (2 * 60 * 1000)
+    const newTime = Date.now() + (5 * 60 * 1000 * counter)
     scheduler.setMigrationScheduler(new Date(newTime), model, image, user)
   }else{
     logger.defaultLogger(`ChangeSchedulerHelper: Set old scheduler time for ${image.rowid}`)
