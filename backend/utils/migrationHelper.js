@@ -141,6 +141,7 @@ const setSchedulerAgain = async (image, model, user, time, counter) => {
   if(Date.now() > (time+hoursToMs+minToMs)){
     logger.defaultLogger(`ChangeSchedulerHelper: Set new scheduler time for ${image.rowid}`)
     const newTime = Date.now() + (5 * 60 * 1000 * counter)
+    console.log(new Date(newTime))
     scheduler.setMigrationScheduler(new Date(newTime), model, image, user)
   }else{
     logger.defaultLogger(`ChangeSchedulerHelper: Set old scheduler time for ${image.rowid}`)
