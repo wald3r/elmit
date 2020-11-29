@@ -94,7 +94,8 @@ const predictModel = async (instance, product, image, user, region, engineCost) 
           const second_last_column = list[1].length -2
           let results = []
           for(let o = 1; o < list.length; o++){
-            results.push([list[o][second_last_column], list[o][last_column]])
+            if(Number(list[o][second_last_column]) > 0 && Number(list[o][second_last_column]) != null && Number(list[o][second_last_column]) != "" && Number(list[o][second_last_column]) != undefined) 
+              results.push([list[o][second_last_column], list[o][last_column]])
           }
           logger.defaultLogger(results)
           results = results.sort(sortFunction)

@@ -1,7 +1,6 @@
 const path = require('path')
 const appRouter = require('express').Router()
 
-
 /**
  * Return pages for single page application
  */
