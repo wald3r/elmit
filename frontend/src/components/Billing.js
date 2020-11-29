@@ -77,7 +77,9 @@ const Billing = (props) => {
       day = day + 1
     })
 
-    let sum = migrations.length === 0 ? 0 : migrations.length -1
+
+    let list = migrations.filter(row => row.oldZone !== row.newZone)
+    let sum = list.length === 0 ? 0 : list.length -1
     data.push(data1)
     data.push(data2)
     data.push(data3)

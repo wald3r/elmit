@@ -42,26 +42,24 @@ const checkMigrationStatus = async () => {
     await databaseHelper.updateById(parameters.imageTableName, 'schedulerName = ?', [null, image.rowid])
   })
 
-  let counter = 0
-  await migrationRows.map(async migRow => {
-    counter = counter + 1
+  await migrationRows.map(async (migRow, idx) => {
     const imageRow = await databaseHelper.selectById(parameters.imageTableValues, parameters.imageTableName, migRow.imageId)
     if(imageRow !== null){
       const modelRow = await databaseHelper.selectById(parameters.modelTableValues, parameters.modelTableName, imageRow.modelId)
       const userRow = await databaseHelper.selectById(parameters.userTableValues, parameters.userTableName, imageRow.userId)
-      await migrationHelper.setSchedulerAgain(imageRow, modelRow, userRow, migRow.updatedAt, counter)
+      await migrationHelper.setSchedulerAgain(imageRow, modelRow, userRow, migRow.updatedAt, idx+1)
     }
   })
 
   let migrationImages = await databaseHelper.selectByValue(parameters.imageTableValues, parameters.imageTableName, "status", ["migrating"])
 
-  await migrationImages.map(async row => {
-    counter = counter + 1
+  await migrationImages.map(async (row, idx) => {
+    const migRow = await databaseHelper.selectByValue(parameters.migrationTableValues, parameters.migrationTableName, "imageId", [row.rowid])
     const modelRow = await databaseHelper.selectById(parameters.modelTableValues, parameters.modelTableName, row.modelId)
     const userRow = await databaseHelper.selectById(parameters.userTableValues, parameters.userTableName, row.userId)
     let newImage = row
-    newImage.zone = 'a'
-    await migrationHelper.setSchedulerAgain(newImage, modelRow, userRow, Date.now(), counter)
+    newImage.zone = migRow.oldZone
+    await migrationHelper.setSchedulerAgain(newImage, modelRow, userRow, Date.now(), idx+1)
 
   })
   logger.defaultLogger(`MigrationStatusHelper: Set ${migrationRows.length} open schedulers`)
