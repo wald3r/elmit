@@ -51,8 +51,14 @@ const trainModels = schedule.scheduleJob('59 23 3 * *', async () => {
   const models = await databaseHelper.selectAllRows(parameters.modelTableValues, parameters.modelTableName)
   await models.map(async row => {
     await databaseHelper.updateById(parameters.modelTableName, 'status = ?, updatedAt = ?', ['training', Date.now(), row.rowid])
-    setTimeout(() => {  mlModel.trainModel(row.type, row.product) }, 1000 * 60 * 10);
+    await new Promise((resolve ) => {
+      SetTimeout(() => {  
+        mlModel.trainModel(row.type, row.product)
+        resolve() 
+      }, 1000 * 60 * 10);
+    })
     
+  
   })
   
 })
