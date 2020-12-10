@@ -126,8 +126,8 @@ const Billing = (props) => {
   else{
     return(
       <div>
-        <div className='tableContainer'>
-          <div className='tableContainer'>
+        <div className='tableContainer1'>
+          <div className='tableContainer1'>
             Choose an Image: {'  '}
             <select onChange={({ target }) => handleImage(target.value)} name='images' id='images'>
               <option value={null} key='null'>----</option>

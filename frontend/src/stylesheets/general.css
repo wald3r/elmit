@@ -11,6 +11,10 @@
   max-height: 500px;
   overflow: auto;
 }
+.tableContainer1{
+  text-align: center;
+
+}
 
 .thead{
   color: black;
